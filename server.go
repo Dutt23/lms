@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/dutt23/lms/config"
+	"github.com/dutt23/lms/middleware"
 	"github.com/dutt23/lms/pkg/connectors"
 	"github.com/dutt23/lms/token"
 	"github.com/gin-gonic/gin"
@@ -43,5 +44,7 @@ func (s *Server) AllConnectors() {
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
+
+	authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.tokenMaker))
 	server.E = router
 }

@@ -6,8 +6,8 @@ type Book struct {
   Author string `json:"author" gorm:"type:string"`
   PublishedDate TimeWrapper `json:"published_date"`
   Isbn string `json:"isbn"`
-  NumberOfPages int64 `json:"number_of_pages"`
+  NumberOfPages uint64 `json:"number_of_pages"`
   CoverImage string `json:"cover_image"`
   Language string `json:"language"`
-  AvailableCopies int64 `json:"available_copies"`
+  AvailableCopies uint64 `json:"available_copies"`
 }
