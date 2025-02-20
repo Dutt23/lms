@@ -9,14 +9,15 @@ import (
 )
 
 type AppConfig struct {
-	Name           string                 `mapstructure:"service_name" validate:"required"`
-	Version        string                 `mapstructure:"version" validate:"required"`
-	Host           string                 `mapstructure:"host" validate:"required"`
-	Secret         string                 `mapstructure:"secret" validate:"required"`
-	Port           int                    `mapstructure:"port" validate:"required"`
-	LogLevel       string                 `mapstructure:"log_level" validate:"required"`
-	DbConfig       DBConfig                `mapstructure:"db" validate:"required"`
-	RedisConfig    CacheConfig             `mapstructure:"cache" validate:"required"`
+	Name              string      `mapstructure:"service_name" validate:"required"`
+	Version           string      `mapstructure:"version" validate:"required"`
+	Host              string      `mapstructure:"host" validate:"required"`
+	Secret            string      `mapstructure:"secret" validate:"required"`
+	Port              int         `mapstructure:"port" validate:"required"`
+	LogLevel          string      `mapstructure:"log_level" validate:"required"`
+	DbConfig          DBConfig    `mapstructure:"db" validate:"required"`
+	RedisConfig       CacheConfig `mapstructure:"cache" validate:"required"`
+	TokenSymmetricKey string      `mapstructure:"token_symmetric_key" validate:"required"`
 }
 
 // reading config and intializing configs for application
