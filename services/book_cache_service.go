@@ -19,6 +19,7 @@ type BookCacheService interface {
 	StoreBookMetaInCache(c context.Context, book *model.Book) error
 	DoesBookExist(c context.Context, bookId uint64) bool
 	GetBook(c context.Context, bookId uint64) *model.Book
+	DeleteBook(c context.Context, bookId uint64) error
 }
 
 type bookCacheService struct {
@@ -63,6 +64,12 @@ func (cache *bookCacheService) DoesBookExist(c context.Context, bookId uint64) b
 		return true
 	}
 	return res
+}
+
+func (cache *bookCacheService) DeleteBook(c context.Context, bookId uint64) error {
+	db := cache.conn.DB(c)
+	bookKey := CacheKey(c, "SET_BOOK", fmt.Sprintf("%d", bookId))
+	return db.Del(c, bookKey).Err()
 }
 
 func (cache *bookCacheService) GetBook(c context.Context, bookId uint64) *model.Book {
