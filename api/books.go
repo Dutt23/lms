@@ -96,10 +96,7 @@ func (api *booksApi) GetBook(ctx *gin.Context) {
 	}
 
 	res := api.cache.GetBook(ctx, (req.ID)); 
-fmt.Println("reienee" )
-fmt.Println(res)
 	if res != nil {
-		fmt.Println("returning from cache")
 		ctx.JSON(http.StatusOK, res)
 		return 
 	}
