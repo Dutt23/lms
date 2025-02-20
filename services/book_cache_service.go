@@ -11,15 +11,12 @@ import (
 	"golang.org/x/exp/rand"
 )
 
-const (
-	BOOK_ID_FILTER = "books:id"
-)
-
 type BookCacheService interface {
 	StoreBookMetaInCache(c context.Context, book *model.Book) error
 	DoesBookExist(c context.Context, bookId uint64) bool
 	GetBook(c context.Context, bookId uint64) *model.Book
 	DeleteBook(c context.Context, bookId uint64) error
+	IsIsbnUnique(c context.Context, isbn string) bool
 }
 
 type bookCacheService struct {
@@ -48,7 +45,7 @@ func (cache *bookCacheService) StoreBookMetaInCache(c context.Context, book *mod
 	jitter = time.Duration(rand.Int63n(int64(bookCountExpiryTime)))
 	pipe.Set(c, bookCountKey, book.AvailableCopies, bookCountExpiryTime+jitter/2)
 
-	pipe.BFAdd(c, BOOK_ID_FILTER, book.Id)
+	pipe.BFAdd(c, BOOK_ISBN_FILTER, book.Id)
 
 	_, err = pipe.Exec(c)
 	return err
@@ -56,14 +53,27 @@ func (cache *bookCacheService) StoreBookMetaInCache(c context.Context, book *mod
 
 func (cache *bookCacheService) DoesBookExist(c context.Context, bookId uint64) bool {
 	db := cache.conn.DB(c)
-	res, err := db.BFExists(c, BOOK_ID_FILTER, bookId).Result()
+	bookKey := CacheKey(c, "SET_BOOK", fmt.Sprintf("%d", bookId))
+	res, err := db.Exists(c, bookKey).Result()
 
 	if err != nil {
 		fmt.Errorf("unable to determine result %w", err)
 		// This will go to the database for confirmation
 		return true
 	}
-	return res
+	return res > 0
+}
+
+func (cache *bookCacheService) IsIsbnUnique(c context.Context, isbn string) bool {
+	db := cache.conn.DB(c)
+	res, err := db.BFExists(c, BOOK_ISBN_FILTER, isbn).Result()
+
+	if err != nil {
+		fmt.Errorf("unable to determine result %w", err)
+		// This will go to the database for confirmation
+		return true
+	}
+	return !res
 }
 
 func (cache *bookCacheService) DeleteBook(c context.Context, bookId uint64) error {

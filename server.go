@@ -14,13 +14,14 @@ import (
 )
 
 type Server struct {
-	config     *config.AppConfig
-	DB         connectors.SqliteConnector
-	Cache      connectors.CacheConnector
-	Closeable  []func(context.Context) error
-	E          *gin.Engine
-	tokenMaker token.Maker
-	bookFilter *bloom.BloomFilter
+	config       *config.AppConfig
+	DB           connectors.SqliteConnector
+	Cache        connectors.CacheConnector
+	Closeable    []func(context.Context) error
+	E            *gin.Engine
+	tokenMaker   token.Maker
+	bookFilter   *bloom.BloomFilter
+	memberFilter *bloom.BloomFilter
 }
 
 func NewServer(config *config.AppConfig) (*Server, error) {
@@ -30,7 +31,8 @@ func NewServer(config *config.AppConfig) (*Server, error) {
 	}
 
 	bookFilter := bloom.NewWithEstimates(1000000, 0.01)
-	server := &Server{tokenMaker: tokenMaker, config: config, bookFilter: bookFilter}
+	memberFilter := bloom.NewWithEstimates(1000000, 0.01)
+	server := &Server{tokenMaker: tokenMaker, config: config, bookFilter: bookFilter, memberFilter: memberFilter}
 
 	// Init storages
 	server.AllConnectors()
@@ -50,6 +52,7 @@ func (server *Server) setupRouter() {
 	router := gin.Default()
 	apiv1 := router.Group("/v1/")
 	server.addBookRoutes(apiv1)
+	server.addMemberRoutes(apiv1)
 	// authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.tokenMaker))
 	server.E = router
 }
@@ -60,4 +63,14 @@ func (server *Server) addBookRoutes(grp *gin.RouterGroup) {
 	grp.GET("/books", bookHandler.GetBooks)
 	grp.GET("/book/:id", bookHandler.GetBook)
 	grp.PUT("/book/:id", bookHandler.UpdateBook)
+	grp.DELETE("/book/:id", bookHandler.DeleteBook)
+}
+
+func (server *Server) addMemberRoutes(grp *gin.RouterGroup) {
+	memberHandler := api.NewMembersApi(server.config, server.DB, server.memberFilter, service.NewMemberCacheService(server.Cache))
+	grp.POST("/member", memberHandler.AddMember)
+	grp.GET("/members", memberHandler.GetMembers)
+	grp.GET("/members/:id", memberHandler.GetMember)
+	grp.PUT("/book/:id", memberHandler.UpdateMember)
+	grp.DELETE("/member/:id", memberHandler.DeleteMember)
 }

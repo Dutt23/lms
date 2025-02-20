@@ -53,7 +53,7 @@ type getBooksRequestBody struct {
 }
 
 type getBooksResponseBody struct {
-	Books []*model.Book
+	Books []*model.Book `json:"books"`
 }
 
 type booksApi struct {
@@ -77,6 +77,11 @@ func (api *booksApi) AddBook(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	if api.cache.IsIsbnUnique(ctx, req.Isbn) {
+		ctx.JSON(http.StatusBadRequest, errorResponse(errors.New("duplicate isbn provided")))
 		return
 	}
 
@@ -123,10 +128,8 @@ func (api *booksApi) GetBooks(ctx *gin.Context) {
 		pageSize = 10
 	}
 
-	fmt.Println(req)
 	qry := api.db.DB(ctx).Model(model.Book{}).Where("id > ?", lastId).Limit(pageSize)
 
-	fmt.Println(req.Criterias)
 	for _, ct := range req.Criterias {
 		qry.Where(fmt.Sprintf("%s %s ?", ct.Key, ct.Logic), ct.Value)
 	}
@@ -142,8 +145,8 @@ func (api *booksApi) GetBooks(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, getBooksResponseBody{Books: books })
-	
+	ctx.JSON(http.StatusOK, getBooksResponseBody{Books: books})
+
 }
 
 func (api *booksApi) GetBook(ctx *gin.Context) {
@@ -151,11 +154,6 @@ func (api *booksApi) GetBook(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	if !api.cache.DoesBookExist(ctx, uint64(req.ID)) {
-		ctx.JSON(http.StatusNotFound, errorResponse(errors.New(fmt.Sprintf("unable to locate book with Id %d", req.ID))))
 		return
 	}
 
@@ -172,6 +170,9 @@ func (api *booksApi) GetBook(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(errors.New(fmt.Sprintf("unable to locate book with Id %d", req.ID))))
 		return
 	}
+
+	c := context.Background()
+	go api.storeBookMeta(c, book)
 	ctx.JSON(http.StatusOK, book)
 }
 
@@ -185,6 +186,7 @@ func (api *booksApi) UpdateBook(ctx *gin.Context) {
 
 	if !api.cache.DoesBookExist(ctx, uint64(req.ID)) {
 		ctx.JSON(http.StatusNotFound, errorResponse(errors.New(fmt.Sprintf("unable to locate book with Id %d", req.ID))))
+		return 
 	}
 
 	book := &model.Book{
@@ -225,19 +227,26 @@ func (api *booksApi) DeleteBook(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(errors.New(fmt.Sprintf("unable to delete book %d", req.ID))))
 		return
 	}
+
+	go api.invalidateBookCache(req.ID)
+	ctx.Status(http.StatusOK)
 }
 
 func (api *booksApi) postProcessAddingBook(book *model.Book) {
 	ctx := context.Background()
 	api.filter.Add([]byte(book.Isbn))
+	api.storeBookMeta(ctx, book)
+}
+
+func (api *booksApi) storeBookMeta(ctx context.Context, book *model.Book) {
 	if err := api.cache.StoreBookMetaInCache(ctx, book); err != nil {
 		fmt.Printf("Error occurred while adding book to cache %w", err)
 	}
 }
 
-func (api *booksApi) invalidateBookCache(book *model.Book) {
+func (api *booksApi) invalidateBookCache(bookId uint64) {
 	ctx := context.Background()
-	if err := api.cache.DeleteBook(ctx, book.Id); err != nil {
+	if err := api.cache.DeleteBook(ctx, bookId); err != nil {
 		fmt.Println("Unable to remove entry from cache ", err)
 	}
 }
