@@ -16,7 +16,7 @@ CREATE TABLE "books" (
 CREATE TABLE "members" (
   "id" INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" bigint NOT NULL,
-  "email" bigint NOT NULL,
+  "email" bigint UNIQUE NOT NULL,
   "join_date" timestamp NOT NULL DEFAULT (now())
 );
 
@@ -40,3 +40,4 @@ CREATE INDEX "members_email_idx" ON "members" ("email");
 CREATE INDEX  "book_loans_book_id_idx" ON "book_loans" ("book_id");
 CREATE INDEX  "book_loans_member_id_idx" ON "book_loans" ("member_id");
 CREATE INDEX  "book_loans_loan_date_idx" ON "book_loans" ("loan_date");
+CREATE UNIQUE INDEX "book_loans_member_id_book_id_uq_idx" ON "book_loans" ("member_id", "book_id");

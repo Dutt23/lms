@@ -59,16 +59,16 @@ func (server *Server) setupRouter() {
 
 func (server *Server) addBookRoutes(grp *gin.RouterGroup) {
 	bookHandler := api.NewBooksApi(server.config, server.DB, server.bookFilter, service.NewBookCacheService(server.Cache))
-	grp.POST("/book", bookHandler.AddBook)
+	grp.POST("/books", bookHandler.AddBook)
 	grp.GET("/books", bookHandler.GetBooks)
-	grp.GET("/book/:id", bookHandler.GetBook)
-	grp.PUT("/book/:id", bookHandler.UpdateBook)
-	grp.DELETE("/book/:id", bookHandler.DeleteBook)
+	grp.GET("/books/:id", bookHandler.GetBook)
+	grp.PUT("/books/:id", bookHandler.UpdateBook)
+	grp.DELETE("/books/:id", bookHandler.DeleteBook)
 }
 
 func (server *Server) addMemberRoutes(grp *gin.RouterGroup) {
 	memberHandler := api.NewMembersApi(server.config, server.DB, server.memberFilter, service.NewMemberCacheService(server.Cache))
-	grp.POST("/member", memberHandler.AddMember)
+	grp.POST("/members", memberHandler.AddMember)
 	grp.GET("/members", memberHandler.GetMembers)
 	grp.GET("/members/:id", memberHandler.GetMember)
 	grp.PUT("/members/:id", memberHandler.UpdateMember)
