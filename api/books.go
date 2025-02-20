@@ -72,6 +72,15 @@ func NewBooksApi(config *config.AppConfig, db connectors.SqliteConnector, bookFi
 	}
 }
 
+// AddBook godoc
+//@Summary endpoint to create book
+//@Description add a book
+//@Tags book
+//@Accept json
+//@Produce json
+//@Param book body addBookRequestBody true "Book data"
+//@Success 200 {object} model.Book
+//@Router /v1/book [post]
 func (api *booksApi) AddBook(ctx *gin.Context) {
 	var req addBookRequestBody
 
@@ -108,6 +117,15 @@ func (api *booksApi) AddBook(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, book)
 }
 
+// AddBook godoc
+//@Summary endpoint to filter and get books
+//@Description get a list of books
+//@Tags book
+//@Accept json
+//@Produce json
+//@Param bookListParams body getBooksRequestBody true "Book data"
+//@Success 200 {object} []model.Book
+//@Router /v1/book [get]
 func (api *booksApi) GetBooks(ctx *gin.Context) {
 	var req getBooksRequestBody
 
@@ -149,6 +167,14 @@ func (api *booksApi) GetBooks(ctx *gin.Context) {
 
 }
 
+// GetBook godoc
+//@Summary endpoint to get book
+//@Description get a book
+//@Tags book
+//@Produce json
+//@param id path integer false "book id"
+//@Success 200 {object} model.Book
+//@Router /v1/book/:id [get]
 func (api *booksApi) GetBook(ctx *gin.Context) {
 	var req getBookRequestBody
 
@@ -176,6 +202,16 @@ func (api *booksApi) GetBook(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, book)
 }
 
+// UpdateBook godoc
+//@Summary endpoint to update book
+//@Description update book data
+//@Tags book
+//@Produce json
+//@Accept json
+//@Param book body updateBookRequestBody true "Book data"
+//@param id path integer false "book id"
+//@Success 200 {object} model.Book
+//@Router /v1/book/:id [put]
 func (api *booksApi) UpdateBook(ctx *gin.Context) {
 	var req updateBookRequestBody
 
@@ -210,6 +246,13 @@ func (api *booksApi) UpdateBook(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, book)
 }
 
+// DeleteBook godoc
+//@Summary endpoint to delete book
+//@Description delete a book
+//@Tags book
+//@param id path integer false "book id"
+//@Success 200
+//@Router /v1/book/:id [delete]
 func (api *booksApi) DeleteBook(ctx *gin.Context) {
 	var req deleteBookRequestBody
 
