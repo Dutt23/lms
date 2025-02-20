@@ -200,6 +200,7 @@ func (api *booksApi) UpdateBook(ctx *gin.Context) {
 	if err := api.db.DB(ctx).Save(book).Error; err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
+	go api.postProcessAddingBook(book)
 	ctx.JSON(http.StatusOK, book)
 }
 
