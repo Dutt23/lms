@@ -28,7 +28,7 @@ func NewSqliteConnector(config *config.DBConfig) SqliteConnector {
 }
 
 func (sql *sqliteConnector) Connect(ctx context.Context) error {
-	db, err := gorm.Open(sqlite.Open("gorm.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("lms.db"), &gorm.Config{})
 	if err != nil {
 		fmt.Errorf("Failed to open sqlite connection %s.", err)
 		return err

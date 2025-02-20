@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bits-and-blooms/bloom/v3"
+	"github.com/dutt23/lms/api"
 	"github.com/dutt23/lms/config"
-	"github.com/dutt23/lms/middleware"
 	"github.com/dutt23/lms/pkg/connectors"
+	service "github.com/dutt23/lms/services"
 	"github.com/dutt23/lms/token"
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +20,7 @@ type Server struct {
 	Closeable  []func(context.Context) error
 	E          *gin.Engine
 	tokenMaker token.Maker
+	bookFilter *bloom.BloomFilter
 }
 
 func NewServer(config *config.AppConfig) (*Server, error) {
@@ -26,7 +29,8 @@ func NewServer(config *config.AppConfig) (*Server, error) {
 		return nil, fmt.Errorf("cannot create token maker %w", err)
 	}
 
-	server := &Server{tokenMaker: tokenMaker, config: config}
+	bookFilter := bloom.NewWithEstimates(1000000, 0.01)
+	server := &Server{tokenMaker: tokenMaker, config: config, bookFilter: bookFilter}
 
 	// Init storages
 	server.AllConnectors()
@@ -38,13 +42,21 @@ func NewServer(config *config.AppConfig) (*Server, error) {
 func (s *Server) AllConnectors() {
 	sql := connectors.NewSqliteConnector(&s.config.DbConfig)
 	s.DB = sql
-	// redis := connectors.NewRedisConnector(&g.Cfg.RedisConfig, g.Logger)
-	// g.Redis = redis
+	cache := connectors.NewCacheConnector(&s.config.CacheConfig)
+	s.Cache = cache
 }
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
-
-	authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.tokenMaker))
+	apiv1 := router.Group("/v1/")
+	server.addBookRoutes(apiv1)
+	// authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.tokenMaker))
 	server.E = router
+}
+
+func (server *Server) addBookRoutes(grp *gin.RouterGroup) {
+	bookHandler := api.NewBooksApi(server.config, server.DB, server.bookFilter, service.NewBookCacheService(server.Cache))
+	grp.POST("/book", bookHandler.AddBook)
+	grp.PUT("/book/:id", bookHandler.UpdateBook)
+	grp.GET("/book/:id", bookHandler.GetBook)
 }

@@ -8,12 +8,15 @@ import (
 
 	"github.com/dutt23/lms/config"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"golang.org/x/exp/rand"
 )
 
 type AppRunner struct {
-	server *Server
-  Closeable []func(context.Context) error
+	server    *Server
+	Closeable []func(context.Context) error
 }
 
 func main() {
@@ -30,7 +33,9 @@ func main() {
 		panic(err)
 	}
 	appRunner.server = s
-  appRunner.Init(ctx)
+	appRunner.Init(ctx)
+	runMigrations(cfg.MigrationUrl, cfg.DBSource)
+	appRunner.server.E.Run(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port))
 }
 
 func (app *AppRunner) ResolveConfig() (*config.AppConfig, error) {
@@ -61,5 +66,30 @@ func (app *AppRunner) Init(ctx context.Context) error {
 		return err
 	}
 	app.Closeable = append(app.Closeable, app.server.DB.Disconnect)
+
+	err = app.server.Cache.Connect(ctx)
+	if err != nil {
+		fmt.Errorf("error while connecting to cache.", err)
+		return err
+	} else {
+		app.Closeable = append(app.Closeable, app.server.Cache.Disconnect)
+	}
+
 	return nil
+}
+
+func runMigrations(migrationURL, dbSource string) {
+	fmt.Println(migrationURL)
+	fmt.Println(dbSource)
+	m, err := migrate.New(migrationURL, dbSource)
+
+	if err != nil {
+		log.Panicf("Cannot create new migrate instance %w", err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Panicf("Cannot run migrate up on the instance %w", err)
+	}
+
+	fmt.Println("database migration successful")
 }

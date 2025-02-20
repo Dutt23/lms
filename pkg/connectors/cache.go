@@ -10,9 +10,9 @@ import (
 )
 
 type CacheConnector interface {
-  Connector
+	Connector
+	DB(ctx context.Context) *redis.Client
 }
-
 
 type dragonFlyConnector struct {
 	cfg        *config.CacheConfig
@@ -20,7 +20,7 @@ type dragonFlyConnector struct {
 }
 
 func NewCacheConnector(config *config.CacheConfig) CacheConnector {
-  return &dragonFlyConnector{ cfg: config }
+	return &dragonFlyConnector{cfg: config}
 }
 
 func (dragonFlyConn *dragonFlyConnector) connectionString() string {
@@ -30,6 +30,10 @@ func (dragonFlyConn *dragonFlyConnector) connectionString() string {
 // provide a debug name for connector
 func (dragonFlyConn *dragonFlyConnector) Name() string {
 	return fmt.Sprintf("DRAGONFLY %s:%d", dragonFlyConn.cfg.Host, dragonFlyConn.cfg.Port)
+}
+
+func (dragonFlyConn *dragonFlyConnector) DB(ctx context.Context) *redis.Client {
+	return dragonFlyConn.GetConnection()
 }
 
 // only connect the call usually made by main.go to create a connection with given configuration

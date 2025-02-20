@@ -10,13 +10,15 @@ import (
 
 type AppConfig struct {
 	Name              string      `mapstructure:"service_name" validate:"required"`
+	DBSource string    `mapstructure:"db_source" validate:"required"`
+	MigrationUrl string  `mapstructure:"migration_url" validate:"required"`
 	Version           string      `mapstructure:"version" validate:"required"`
 	Host              string      `mapstructure:"host" validate:"required"`
 	Secret            string      `mapstructure:"secret" validate:"required"`
 	Port              int         `mapstructure:"port" validate:"required"`
 	LogLevel          string      `mapstructure:"log_level" validate:"required"`
 	DbConfig          DBConfig    `mapstructure:"db" validate:"required"`
-	RedisConfig       CacheConfig `mapstructure:"cache" validate:"required"`
+	CacheConfig       CacheConfig `mapstructure:"cache" validate:"required"`
 	TokenSymmetricKey string      `mapstructure:"token_symmetric_key" validate:"required"`
 }
 
@@ -48,9 +50,9 @@ func InitConfig() (*viper.Viper, error) {
 }
 
 func setDefault(v *viper.Viper) {
-	v.SetDefault("SERVICE_NAME", "go-service-template")
+	v.SetDefault("SERVICE_NAME", "lms-project")
 	v.SetDefault("VERSION", "0.0.1")
-	v.SetDefault("HOST", "0.0.0.0")
+	v.SetDefault("HOST", "localhost")
 	v.SetDefault("PORT", "")
 	v.SetDefault("LOG_LEVEL", "debug")
 	//
