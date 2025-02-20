@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/dutt23/lms/config"
-	docs "github.com/dutt23/lms/docs"
+	_ "github.com/dutt23/lms/docs"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
@@ -37,8 +37,8 @@ func main() {
 	}
 	appRunner.server = s
 	appRunner.Init(ctx)
+	defer appRunner.Close(ctx)
 	runMigrations(cfg.MigrationUrl, cfg.DBSource)
-	docs.SwaggerInfo.BasePath = "/v1"
 	appRunner.server.E.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	appRunner.server.E.Run(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port))
 }
@@ -81,6 +81,18 @@ func (app *AppRunner) Init(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (app *AppRunner) Close(ctx context.Context) {
+	if len(app.Closeable) > 0 {
+		fmt.Println("there are closeable references to closed")
+		for _, closeable := range app.Closeable {
+			err := closeable(ctx)
+			if err != nil {
+				fmt.Println("error while closing %v", err)
+			}
+		}
+	}
 }
 
 func runMigrations(migrationURL, dbSource string) {

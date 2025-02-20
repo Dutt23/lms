@@ -10,7 +10,7 @@ CREATE TABLE "books" (
   "number_of_pages" bigint NOT NULL,
   "cover_image" varchar,
   "language" varchar NOT NULL,
-  "available_copies" bigint NOT NULL
+  "available_copies" bigint NOT NULL CHECK ("available_copies" >= 0)
 );
 
 CREATE TABLE "members" (
