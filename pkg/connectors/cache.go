@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/dutt23/lms/config"
-	"gopkg.in/redis.v5"
+	"github.com/redis/go-redis/v9"
 )
 
 type CacheConnector interface {
@@ -66,7 +66,7 @@ func (dragonFlyConn *dragonFlyConnector) GetConnection() *redis.Client {
 func (dragonFlyConn *dragonFlyConnector) IsConnected(ctx context.Context) bool {
 
 	fmt.Printf("Pinging redis server.")
-	pingResponse, err := dragonFlyConn.Connection.Ping().Result()
+	pingResponse, err := dragonFlyConn.Connection.Ping(ctx).Result()
 	if err != nil {
 		fmt.Errorf("Error while pinging redis server. %v", err)
 		return false

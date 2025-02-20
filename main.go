@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/dutt23/lms/config"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/exp/rand"
 )
 
 type AppRunner struct {
@@ -16,7 +18,7 @@ type AppRunner struct {
 
 func main() {
 	ctx := context.Background()
-
+	rand.Seed(uint64(time.Now().UnixNano()))
 	appRunner := AppRunner{}
 	// resolving configuration
 	cfg, err := appRunner.ResolveConfig()

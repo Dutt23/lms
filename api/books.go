@@ -15,7 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type BookAddRequestBody struct {
+type addBookRequestBody struct {
   Title string `json:"title" binding:"required,alpha,gt=1"`
   Author string `json:"author" binding:"required,alpha,gt=1"`
   PublishedDate time.Time `json:"published_date" binding:"required,gt"`
@@ -24,6 +24,10 @@ type BookAddRequestBody struct {
   CoverURL string `json:"cover_url" binding:"gt=1"`
   Language string `json:"language" binding:"required,alpha,gt=1"`
   AvailableCopies uint64 `json:"available_copies" binding:"required,numeric,gt=1"`
+}
+
+type getBookRequestBody struct {
+	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
 type booksApi struct {
@@ -43,7 +47,7 @@ func NewBooksApi(config *config.AppConfig, db connectors.SqliteConnector, bookFi
 }
 
 func (api *booksApi) AddBook(ctx *gin.Context) {
-  var req BookAddRequestBody 
+  var req addBookRequestBody 
 
   	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -76,7 +80,20 @@ func (api *booksApi) AddBook(ctx *gin.Context) {
 func (api *booksApi) postProcessAddingBook(book *model.Book) {
   ctx := context.Background()
   api.filter.Add([]byte(book.Isbn))
-  api.cache.AddBook(ctx, book)
+  if err := api.cache.StoreBookMetaInCache(ctx, book); err != nil {
+    fmt.Printf("Error occurred while adding book to cache %w", err)
+  }
+}
+
+
+func (api *booksApi) GetBook(ctx *gin.Context) {
+  var req getBookRequestBody
+
+  if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
 }
 
 func errorResponse(err error) gin.H {
