@@ -29,7 +29,6 @@ type addBookRequestBody struct {
 
 type updateBookRequestBody struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
-	addBookRequestBody
 }
 
 type getBookRequestBody struct {
@@ -73,14 +72,14 @@ func NewBooksApi(config *config.AppConfig, db connectors.SqliteConnector, bookFi
 }
 
 // AddBook godoc
-//@Summary endpoint to create book
-//@Description add a book
-//@Tags book
-//@Accept json
-//@Produce json
-//@Param book body addBookRequestBody true "Book data"
-//@Success 200 {object} model.Book
-//@Router /v1/book [post]
+// @Summary endpoint to create book
+// @Description add a book
+// @Tags book
+// @Accept json
+// @Produce json
+// @Param book body addBookRequestBody true "Book data"
+// @Success 200 {object} model.Book
+// @Router /v1/book [post]
 func (api *booksApi) AddBook(ctx *gin.Context) {
 	var req addBookRequestBody
 
@@ -118,14 +117,14 @@ func (api *booksApi) AddBook(ctx *gin.Context) {
 }
 
 // AddBook godoc
-//@Summary endpoint to filter and get books
-//@Description get a list of books
-//@Tags book
-//@Accept json
-//@Produce json
-//@Param bookListParams body getBooksRequestBody true "Book data"
-//@Success 200 {object} []model.Book
-//@Router /v1/book [get]
+// @Summary endpoint to filter and get books
+// @Description get a list of books
+// @Tags book
+// @Accept json
+// @Produce json
+// @Param bookListParams body getBooksRequestBody true "Book data"
+// @Success 200 {object} []model.Book
+// @Router /v1/book [get]
 func (api *booksApi) GetBooks(ctx *gin.Context) {
 	var req getBooksRequestBody
 
@@ -168,13 +167,13 @@ func (api *booksApi) GetBooks(ctx *gin.Context) {
 }
 
 // GetBook godoc
-//@Summary endpoint to get book
-//@Description get a book
-//@Tags book
-//@Produce json
-//@param id path integer false "book id"
-//@Success 200 {object} model.Book
-//@Router /v1/book/:id [get]
+// @Summary endpoint to get book
+// @Description get a book
+// @Tags book
+// @Produce json
+// @param id path integer false "book id"
+// @Success 200 {object} model.Book
+// @Router /v1/book/:id [get]
 func (api *booksApi) GetBook(ctx *gin.Context) {
 	var req getBookRequestBody
 
@@ -203,15 +202,15 @@ func (api *booksApi) GetBook(ctx *gin.Context) {
 }
 
 // UpdateBook godoc
-//@Summary endpoint to update book
-//@Description update book data
-//@Tags book
-//@Produce json
-//@Accept json
-//@Param book body updateBookRequestBody true "Book data"
-//@param id path integer false "book id"
-//@Success 200 {object} model.Book
-//@Router /v1/book/:id [put]
+// @Summary endpoint to update book
+// @Description update book data
+// @Tags book
+// @Produce json
+// @Accept json
+// @Param book body addBookRequestBody true "Book data"
+// @param id path integer false "book id"
+// @Success 200 {object} model.Book
+// @Router /v1/book/:id [put]
 func (api *booksApi) UpdateBook(ctx *gin.Context) {
 	var req updateBookRequestBody
 
@@ -220,23 +219,30 @@ func (api *booksApi) UpdateBook(ctx *gin.Context) {
 		return
 	}
 
+	var body addBookRequestBody
+
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
 	if !api.cache.DoesBookExist(ctx, uint64(req.ID)) {
 		ctx.JSON(http.StatusNotFound, errorResponse(errors.New(fmt.Sprintf("unable to locate book with Id %d", req.ID))))
-		return 
+		return
 	}
 
 	book := &model.Book{
 		Audited: model.Audited{
 			Id: uint64(req.ID),
 		},
-		Title:           req.Title,
-		Author:          req.Author,
-		PublishedDate:   model.TimeWrapper(req.PublishedDate),
-		Isbn:            req.Isbn,
-		NumberOfPages:   req.NumberOfPages,
-		CoverImage:      req.CoverURL,
-		Language:        req.Language,
-		AvailableCopies: req.AvailableCopies,
+		Title:           body.Title,
+		Author:          body.Author,
+		PublishedDate:   model.TimeWrapper(body.PublishedDate),
+		Isbn:            body.Isbn,
+		NumberOfPages:   body.NumberOfPages,
+		CoverImage:      body.CoverURL,
+		Language:        body.Language,
+		AvailableCopies: body.AvailableCopies,
 	}
 
 	if err := api.db.DB(ctx).Save(book).Error; err != nil {
@@ -247,12 +253,12 @@ func (api *booksApi) UpdateBook(ctx *gin.Context) {
 }
 
 // DeleteBook godoc
-//@Summary endpoint to delete book
-//@Description delete a book
-//@Tags book
-//@param id path integer false "book id"
-//@Success 200
-//@Router /v1/book/:id [delete]
+// @Summary endpoint to delete book
+// @Description delete a book
+// @Tags book
+// @param id path integer false "book id"
+// @Success 200
+// @Router /v1/book/:id [delete]
 func (api *booksApi) DeleteBook(ctx *gin.Context) {
 	var req deleteBookRequestBody
 

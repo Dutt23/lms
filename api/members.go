@@ -51,18 +51,18 @@ type getMembersResponse struct {
 }
 
 type updateMembersRequestBody struct {
-  ID int64 `uri:"id" binding:"required,min=1"`
+	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
 // AddMember godoc
-//@Summary endpoint to create member
-//@Description add a member
-//@Tags member
-//@Accept json
-//@Produce json
-//@Param member body addMemberRequestBody true "Member data"
-//@Success 200 {object} model.Member
-//@Router /v1/member [post]
+// @Summary endpoint to create member
+// @Description add a member
+// @Tags member
+// @Accept json
+// @Produce json
+// @Param member body addMemberRequestBody true "Member data"
+// @Success 200 {object} model.Member
+// @Router /v1/member [post]
 func (api *membersApi) AddMember(ctx *gin.Context) {
 	var req addMemberRequestBody
 
@@ -94,13 +94,13 @@ func (api *membersApi) AddMember(ctx *gin.Context) {
 }
 
 // GetMember godoc
-//@Summary endpoint to get member
-//@Description get a member
-//@Tags member
-//@Produce json
-//@param id path integer false "member id"
-//@Success 200 {object} model.Member
-//@Router /v1/member/:id [get]
+// @Summary endpoint to get member
+// @Description get a member
+// @Tags member
+// @Produce json
+// @param id path integer false "member id"
+// @Success 200 {object} model.Member
+// @Router /v1/member/:id [get]
 func (api *membersApi) GetMember(ctx *gin.Context) {
 	var req getMemberRequestBody
 
@@ -129,12 +129,12 @@ func (api *membersApi) GetMember(ctx *gin.Context) {
 }
 
 // DeleteMember godoc
-//@Summary endpoint to delete member
-//@Description delete a member
-//@Tags member
-//@param id path integer false "member id"
-//@Success 200
-//@Router /v1/member/:id [delete]
+// @Summary endpoint to delete member
+// @Description delete a member
+// @Tags member
+// @param id path integer false "member id"
+// @Success 200
+// @Router /v1/member/:id [delete]
 func (api *membersApi) DeleteMember(ctx *gin.Context) {
 	var req deleteBookRequestBody
 
@@ -158,14 +158,14 @@ func (api *membersApi) DeleteMember(ctx *gin.Context) {
 }
 
 // GetMembers godoc
-//@Summary endpoint to get members
-//@Description get list of members
-//@Tags member
-//@Produce json
-//@Accept json
-//@Param member body getMembersRequestBody true "Member data"
-//@Success 200 {object} []model.Member
-//@Router /v1/member [get]
+// @Summary endpoint to get members
+// @Description get list of members
+// @Tags member
+// @Produce json
+// @Accept json
+// @Param member body getMembersRequestBody true "Member data"
+// @Success 200 {object} []model.Member
+// @Router /v1/member [get]
 func (api *membersApi) GetMembers(ctx *gin.Context) {
 	var req getMembersRequestBody
 
@@ -204,51 +204,51 @@ func (api *membersApi) GetMembers(ctx *gin.Context) {
 }
 
 // UpdateMembers godoc
-//@Summary endpoint to update member
-//@Description update member data
-//@Tags member
-//@Produce json
-//@Accept json
-//@Param member body addMemberRequestBody true "Member data"
-//@param id path integer false "member id"
-//@Success 200 {object} model.Member
-//@Router /v1/member/:id [put]
+// @Summary endpoint to update member
+// @Description update member data
+// @Tags member
+// @Produce json
+// @Accept json
+// @Param member body addMemberRequestBody true "Member data"
+// @param id path integer false "member id"
+// @Success 200 {object} model.Member
+// @Router /v1/member/:id [put]
 func (api *membersApi) UpdateMember(ctx *gin.Context) {
-  var req updateMembersRequestBody
+	var req updateMembersRequestBody
 
-  if err := ctx.ShouldBindUri(&req); err != nil {
+	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-  var body addMemberRequestBody
+	var body addMemberRequestBody
 
-  if err := ctx.ShouldBindJSON(&body); err != nil {
+	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-  if !api.cache.DoesMemberExist(ctx, uint64(req.ID)) {
-    ctx.JSON(http.StatusNotFound, errorResponse(errors.New(fmt.Sprintf("unable to locate member with Id %d", req.ID))))
-    return
-  }
+	if !api.cache.DoesMemberExist(ctx, uint64(req.ID)) {
+		ctx.JSON(http.StatusNotFound, errorResponse(errors.New(fmt.Sprintf("unable to locate member with Id %d", req.ID))))
+		return
+	}
 
-  if !api.cache.IsEmailUnique(ctx, body.Email) {
-    ctx.JSON(http.StatusNotFound, errorResponse(errors.New(fmt.Sprintf("please provide a unique email Id %s", body.Email))))
-    return
-  }
+	if !api.cache.IsEmailUnique(ctx, body.Email) {
+		ctx.JSON(http.StatusNotFound, errorResponse(errors.New(fmt.Sprintf("please provide a unique email Id %s", body.Email))))
+		return
+	}
 
-  member := &model.Member{
+	member := &model.Member{
 		Email:    body.Email,
 		Name:     body.Name,
 		JoinDate: model.TimeWrapper(time.Now()),
 	}
 
-  if err := api.db.DB(ctx).Save(member).Error; err != nil {
+	if err := api.db.DB(ctx).Save(member).Error; err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
-  go api.postProcessAddingMember(member)
-  ctx.JSON(http.StatusOK, member)
+	go api.postProcessAddingMember(member)
+	ctx.JSON(http.StatusOK, member)
 }
 
 func (api *membersApi) invalidateMemberCache(bookId uint64) {
