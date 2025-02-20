@@ -80,7 +80,7 @@ func (api *booksApi) AddBook(ctx *gin.Context) {
 		return
 	}
 
-	if api.cache.IsIsbnUnique(ctx, req.Isbn) {
+	if !api.cache.IsIsbnUnique(ctx, req.Isbn) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(errors.New("duplicate isbn provided")))
 		return
 	}

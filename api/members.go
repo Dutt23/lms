@@ -54,6 +54,15 @@ type updateMembersRequestBody struct {
   ID int64 `uri:"id" binding:"required,min=1"`
 }
 
+// AddMember godoc
+//@Summary endpoint to create member
+//@Description add a member
+//@Tags member
+//@Accept json
+//@Produce json
+//@Param member body addMemberRequestBody true "Member data"
+//@Success 200 {object} model.Book
+//@Router /v1/member [post]
 func (api *membersApi) AddMember(ctx *gin.Context) {
 	var req addMemberRequestBody
 

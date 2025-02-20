@@ -1,3 +1,6 @@
 lms
 .env
 lms.db
+docs.go
+swagger.json
+swagger.yaml

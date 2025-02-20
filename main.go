@@ -7,10 +7,13 @@ import (
 	"time"
 
 	"github.com/dutt23/lms/config"
+	docs "github.com/dutt23/lms/docs"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/exp/rand"
 )
 
@@ -35,6 +38,8 @@ func main() {
 	appRunner.server = s
 	appRunner.Init(ctx)
 	runMigrations(cfg.MigrationUrl, cfg.DBSource)
+	docs.SwaggerInfo.BasePath = "/v1"
+	appRunner.server.E.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	appRunner.server.E.Run(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port))
 }
 
