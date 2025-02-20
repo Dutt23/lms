@@ -11,7 +11,7 @@ import (
 type TimeWrapper time.Time
 
 type Audited struct {
-	Id          uint64      `json:"id" gorm:"type:bigint;primaryKey;autoIncrement"`
+	Id uint64 `json:"id" gorm:"type:bigint;primaryKey;autoIncrement"`
 }
 
 func (t TimeWrapper) MarshalJSON() ([]byte, error) {

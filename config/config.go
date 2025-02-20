@@ -10,8 +10,8 @@ import (
 
 type AppConfig struct {
 	Name              string      `mapstructure:"service_name" validate:"required"`
-	DBSource string    `mapstructure:"db_source" validate:"required"`
-	MigrationUrl string  `mapstructure:"migration_url" validate:"required"`
+	DBSource          string      `mapstructure:"db_source" validate:"required"`
+	MigrationUrl      string      `mapstructure:"migration_url" validate:"required"`
 	Version           string      `mapstructure:"version" validate:"required"`
 	Host              string      `mapstructure:"host" validate:"required"`
 	Secret            string      `mapstructure:"secret" validate:"required"`

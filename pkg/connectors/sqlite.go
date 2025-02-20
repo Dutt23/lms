@@ -8,6 +8,7 @@ import (
 	"github.com/dutt23/lms/config"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type sqliteConnector struct {
@@ -28,7 +29,9 @@ func NewSqliteConnector(config *config.DBConfig) SqliteConnector {
 }
 
 func (sql *sqliteConnector) Connect(ctx context.Context) error {
-	db, err := gorm.Open(sqlite.Open("lms.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("lms.db"), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
 	if err != nil {
 		fmt.Errorf("Failed to open sqlite connection %s.", err)
 		return err

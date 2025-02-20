@@ -32,7 +32,7 @@ func NewBookCacheService(client connectors.CacheConnector) BookCacheService {
 func (cache *bookCacheService) StoreBookMetaInCache(c context.Context, book *model.Book) error {
 	bookKey := CacheKey(c, "SET_BOOK", fmt.Sprintf("%d", book.Id))
 	bookCountKey := CacheKey(c, "SET_BOOK", book.Isbn)
-	
+
 	db := cache.conn.DB(c)
 	pipe := db.Pipeline()
 	bookExpiryTime := 1 * time.Hour
@@ -65,7 +65,7 @@ func (cache *bookCacheService) DoesBookExist(c context.Context, bookId uint64) b
 	return res
 }
 
-func(cache *bookCacheService) GetBook(c context.Context, bookId uint64) *model.Book {
+func (cache *bookCacheService) GetBook(c context.Context, bookId uint64) *model.Book {
 	db := cache.conn.DB(c)
 	bookKey := CacheKey(c, "SET_BOOK", fmt.Sprintf("%d", bookId))
 	res, err := db.Get(c, bookKey).Bytes()
@@ -76,13 +76,13 @@ func(cache *bookCacheService) GetBook(c context.Context, bookId uint64) *model.B
 		return nil
 	}
 
-	 book := &model.Book{}
-	 err = json.Unmarshal(res, book)
+	book := &model.Book{}
+	err = json.Unmarshal(res, book)
 
 	if err != nil {
 		fmt.Println(fmt.Errorf("unable to get result from cache %w", err))
 		// This will go to the database for confirmation
 		return nil
 	}
-	return book;
+	return book
 }

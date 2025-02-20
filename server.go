@@ -57,6 +57,7 @@ func (server *Server) setupRouter() {
 func (server *Server) addBookRoutes(grp *gin.RouterGroup) {
 	bookHandler := api.NewBooksApi(server.config, server.DB, server.bookFilter, service.NewBookCacheService(server.Cache))
 	grp.POST("/book", bookHandler.AddBook)
-	grp.PUT("/book/:id", bookHandler.UpdateBook)
+	grp.GET("/books", bookHandler.GetBooks)
 	grp.GET("/book/:id", bookHandler.GetBook)
+	grp.PUT("/book/:id", bookHandler.UpdateBook)
 }

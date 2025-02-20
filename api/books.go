@@ -13,6 +13,7 @@ import (
 	"github.com/dutt23/lms/pkg/connectors"
 	service "github.com/dutt23/lms/services"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm/clause"
 )
 
 type addBookRequestBody struct {
@@ -27,12 +28,28 @@ type addBookRequestBody struct {
 }
 
 type updateBookRequestBody struct {
-	ID              int64     `uri:"id" binding:"required,min=1"`
+	ID int64 `uri:"id" binding:"required,min=1"`
 	addBookRequestBody
 }
 
 type getBookRequestBody struct {
 	ID uint64 `uri:"id" binding:"required,min=1"`
+}
+
+type criteria struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+	Logic string `json:"logic"`
+}
+
+type getBooksRequestBody struct {
+	LastId    int32       `json:"last_id"`
+	Criterias []*criteria `json:"criterias"`
+	PageSize  int32       `json:"page_size"`
+}
+
+type getBooksResponseBody struct {
+	Books []*model.Book
 }
 
 type booksApi struct {
@@ -82,6 +99,49 @@ func (api *booksApi) AddBook(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, book)
 }
 
+func (api *booksApi) GetBooks(ctx *gin.Context) {
+	var req getBooksRequestBody
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	var books []*model.Book
+	lastId := 0
+	pageSize := 10
+
+	if req.LastId > 0 {
+		lastId = int(req.LastId)
+	}
+
+	if req.PageSize >= 100 || req.PageSize < 1 {
+		pageSize = 10
+	}
+
+	fmt.Println(req)
+	qry := api.db.DB(ctx).Model(model.Book{}).Where("id > ?", lastId).Limit(pageSize)
+
+	fmt.Println(req.Criterias)
+	for _, ct := range req.Criterias {
+		qry.Where(fmt.Sprintf("%s %s ?", ct.Key, ct.Logic), ct.Value)
+	}
+
+	tx := qry.Order(clause.OrderByColumn{
+		Column: clause.Column{Name: "published_date"},
+		Desc:   true,
+	}).Find(&books)
+
+	if tx.Error != nil {
+		fmt.Println("not able to find any books", tx.Error)
+		ctx.JSON(http.StatusInternalServerError, errorResponse(errors.New("Unable to find any books")))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, getBooksResponseBody{Books: books })
+	
+}
+
 func (api *booksApi) GetBook(ctx *gin.Context) {
 	var req getBookRequestBody
 
@@ -95,10 +155,10 @@ func (api *booksApi) GetBook(ctx *gin.Context) {
 		return
 	}
 
-	res := api.cache.GetBook(ctx, (req.ID)); 
+	res := api.cache.GetBook(ctx, (req.ID))
 	if res != nil {
 		ctx.JSON(http.StatusOK, res)
-		return 
+		return
 	}
 
 	db := api.db.DB(ctx)
