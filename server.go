@@ -71,6 +71,6 @@ func (server *Server) addMemberRoutes(grp *gin.RouterGroup) {
 	grp.POST("/member", memberHandler.AddMember)
 	grp.GET("/members", memberHandler.GetMembers)
 	grp.GET("/members/:id", memberHandler.GetMember)
-	grp.PUT("/book/:id", memberHandler.UpdateMember)
+	grp.PUT("/members/:id", memberHandler.UpdateMember)
 	grp.DELETE("/member/:id", memberHandler.DeleteMember)
 }
