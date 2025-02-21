@@ -254,8 +254,8 @@ func (api *loansApi) startAnalytics(loan *model.Loan, book *model.Book) {
 		return
 	}
 	payload := &workers.BookAnalyticsPayload{
-		Book: book,
-		Loan: loan,
+		Book:   book,
+		Loan:   loan,
 		Member: member,
 	}
 	opts := []asynq.Option{
@@ -265,6 +265,6 @@ func (api *loansApi) startAnalytics(loan *model.Loan, book *model.Book) {
 	}
 	err = api.taskDistributor.DistributeBooksAnalyticsPayload(ctx, payload, opts...)
 	if err != nil {
-		fmt.Println("unable to queue analytics task " , err)
+		fmt.Println("unable to queue analytics task ", err)
 	}
 }

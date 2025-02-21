@@ -31,6 +31,7 @@ func (cache *bookCache) StoreBookMetaInCache(c context.Context, book *model.Book
 	bookKey := CacheKey(c, "SET_BOOK", fmt.Sprintf("%d", book.Id))
 	bookCountKey := CacheKey(c, "SET_BOOK", book.Isbn)
 
+	fmt.Println(cache)
 	db := cache.conn.DB(c)
 	pipe := db.Pipeline()
 	bookExpiryTime := 1 * time.Hour
@@ -65,6 +66,7 @@ func (cache *bookCache) DoesBookExist(c context.Context, bookId uint64) bool {
 }
 
 func (cache *bookCache) IsIsbnUnique(c context.Context, isbn string) bool {
+	fmt.Println(cache)
 	db := cache.conn.DB(c)
 	res, err := db.BFExists(c, BOOK_ISBN_FILTER, isbn).Result()
 

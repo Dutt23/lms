@@ -48,6 +48,8 @@ func NewServer(config *config.AppConfig) (*Server, error) {
 	memberFilter := bloom.NewWithEstimates(1000000, 0.01)
 	server := &Server{tokenMaker: tokenMaker, config: config, bookFilter: bookFilter, memberFilter: memberFilter}
 
+	// Init storages
+	server.AllConnectors()
 	// Init cache
 	bookCache := cache.NewBookCache(server.Cache)
 	memberCache := cache.NewMemberCache(server.Cache)
@@ -72,8 +74,6 @@ func NewServer(config *config.AppConfig) (*Server, error) {
 		loanService,
 		taskDistributor,
 	}
-	// Init storages
-	server.AllConnectors()
 	// Add routes
 	server.setupRouter(opts)
 	return server, nil

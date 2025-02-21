@@ -71,14 +71,15 @@ func (app *AppRunner) ResolveConfig() (*config.AppConfig, error) {
 func (app *AppRunner) Init(ctx context.Context) error {
 	err := app.server.DB.Connect(ctx)
 	if err != nil {
-		fmt.Errorf("error while connecting to postgres.", err)
+		fmt.Println("error while connecting to postgres.", err)
 		return err
 	}
+	app.server.DB = app.server.DB
 	app.Closeable = append(app.Closeable, app.server.DB.Disconnect)
 
 	err = app.server.Cache.Connect(ctx)
 	if err != nil {
-		fmt.Errorf("error while connecting to cache.", err)
+		fmt.Println("error while connecting to cache.", err)
 		return err
 	} else {
 		app.Closeable = append(app.Closeable, app.server.Cache.Disconnect)

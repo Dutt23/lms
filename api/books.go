@@ -40,7 +40,7 @@ type addBookRequestBody struct {
 	NumberOfPages   uint64    `json:"number_of_pages" binding:"required,numeric,gt=1"`
 	CoverURL        string    `json:"cover_url" binding:"gt=1"`
 	Language        string    `json:"language" binding:"required,alpha,gt=1"`
-	AvailableCopies int64     `json:"available_copies" binding:"required,numeric,gt=1"`
+	AvailableCopies int64     `json:"available_copies" binding:"required,numeric,gt=0"`
 }
 
 type updateBookRequestBody struct {

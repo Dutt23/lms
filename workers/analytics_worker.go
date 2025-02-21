@@ -74,7 +74,7 @@ func (processor *analyticsTaskProcessor) Process(ctx context.Context, task *asyn
 		fmt.Println("Error in queue ", err)
 		return fmt.Errorf("unable to un-marshal json for task %w", asynq.SkipRetry)
 	}
-	
+
 	return nil
 }
 
