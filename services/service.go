@@ -10,4 +10,6 @@ import (
 type BookService interface {
   GetBook(ctx context.Context, bookId uint64) (*model.Book, error)
 }
-type MemberService interface {}
+type MemberService interface {
+   GetMember(ctx context.Context, memberId uint64) (*model.Member, error)
+}

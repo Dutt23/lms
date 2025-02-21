@@ -69,7 +69,7 @@ func (server *Server) addBookRoutes(grp *gin.RouterGroup) {
 }
 
 func (server *Server) addMemberRoutes(grp *gin.RouterGroup) {
-	memberHandler := api.NewMembersApi(server.config, server.DB, server.memberFilter, cache.NewMemberCache(server.Cache))
+	memberHandler := api.NewMembersApi(server.config, server.DB, cache.NewMemberCache(server.Cache))
 	grp.POST("/members", memberHandler.AddMember)
 	grp.GET("/members", memberHandler.GetMembers)
 	grp.GET("/members/:id", memberHandler.GetMember)

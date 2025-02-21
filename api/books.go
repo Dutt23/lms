@@ -181,11 +181,12 @@ func (api *booksApi) GetBook(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-	
+
 	book, err := api.service.GetBook(ctx, req.ID)
 	if err != nil {
 		fmt.Errorf("error : %w", err)
 		ctx.JSON(http.StatusInternalServerError, errorResponse(errors.New(fmt.Sprintf("unable to locate book with Id %d", req.ID))))
+		return 
 	}
 
 	c := context.Background()

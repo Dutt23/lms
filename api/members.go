@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bits-and-blooms/bloom/v3"
 	cache "github.com/dutt23/lms/cache"
 	"github.com/dutt23/lms/config"
 	"github.com/dutt23/lms/model"
 	"github.com/dutt23/lms/pkg/connectors"
+	service "github.com/dutt23/lms/services"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm/clause"
 )
@@ -19,16 +19,16 @@ import (
 type membersApi struct {
 	config *config.AppConfig
 	db     connectors.SqliteConnector
-	filter *bloom.BloomFilter
 	cache  cache.MemberCache
+  service service.MemberService
 }
 
-func NewMembersApi(config *config.AppConfig, db connectors.SqliteConnector, bookFilter *bloom.BloomFilter, cache cache.MemberCache) *membersApi {
+func NewMembersApi(config *config.AppConfig, db connectors.SqliteConnector, cache cache.MemberCache, service service.MemberService) *membersApi {
 	return &membersApi{
-		config: config,
-		db:     db,
-		filter: bookFilter,
-		cache:  cache,
+		config,
+		db,
+		cache,
+    service,
 	}
 }
 
@@ -109,19 +109,12 @@ func (api *membersApi) GetMember(ctx *gin.Context) {
 		return
 	}
 
-	res := api.cache.GetMember(ctx, (req.ID))
-	if res != nil {
-		ctx.JSON(http.StatusOK, res)
-		return
-	}
-
-	db := api.db.DB(ctx)
-	var member *model.Member
-	if err := db.Last(&member, req.ID).Error; err != nil {
-		fmt.Errorf("error : %w", err)
+  member, err := api.service.GetMember(ctx, req.ID)
+  if err != nil {
+    fmt.Errorf("error : %w", err)
 		ctx.JSON(http.StatusInternalServerError, errorResponse(errors.New(fmt.Sprintf("unable to locate member with Id %d", req.ID))))
-		return
-	}
+		return 
+  }
 
 	c := context.Background()
 	go api.storeMemberMeta(c, member)
@@ -260,7 +253,6 @@ func (api *membersApi) invalidateMemberCache(bookId uint64) {
 
 func (api *membersApi) postProcessAddingMember(member *model.Member) {
 	ctx := context.Background()
-	api.filter.Add([]byte(member.Email))
 	api.storeMemberMeta(ctx, member)
 }
 
