@@ -10,14 +10,14 @@ import (
 )
 
 const (
-	authorizationHeaderKey = "authorization"
-	authTypeBearer         = "Bearer"
-	authPayloadKey         = "authotization_payload"
+	AuthorizationHeaderKey = "authorization"
+	AuthTypeBearer         = "Bearer"
+	AuthPayloadKey         = "authotization_payload"
 )
 
 func AuthMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		authHeader := ctx.GetHeader(authorizationHeaderKey)
+		authHeader := ctx.GetHeader(AuthorizationHeaderKey)
 
 		if len(authHeader) == 0 {
 			err := errors.New("authorization header not provided")
@@ -35,7 +35,7 @@ func AuthMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 
 		authType := fields[0]
 
-		if authType != authTypeBearer {
+		if authType != AuthTypeBearer {
 			err := errors.New("auth type not supported by the server")
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(err))
 			return
@@ -48,7 +48,7 @@ func AuthMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(err))
 		}
 
-		ctx.Set(authPayloadKey, payload)
+		ctx.Set(AuthPayloadKey, payload)
 		ctx.Next()
 	}
 }

@@ -15,6 +15,7 @@ type BookService interface {
 }
 type MemberService interface {
 	GetMember(ctx context.Context, memberId uint64) (*model.Member, error)
+	GetMemberByEmail(ctx context.Context, email string) (*model.Member, error)
 	GetMembers(ctx context.Context, lastId uint64, pageSize int) ([]*model.Member, error)
 }
 

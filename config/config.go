@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/go-playground/validator"
 	"github.com/spf13/viper"
@@ -21,6 +22,8 @@ type AppConfig struct {
 	CacheConfig       CacheConfig `mapstructure:"cache" validate:"required"`
 	TokenSymmetricKey string      `mapstructure:"token_symmetric_key" validate:"required"`
 	QueuePort         int         `mapstructure:"queue_port" validate:"required"`
+	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 }
 
 // reading config and intializing configs for application

@@ -37,7 +37,6 @@ type getAnalyticsResponseBody struct {
 	MemberAnalytics *cache.MemberAnalytics `json:"member_week_analytics"`
 }
 
-
 // GetAnalytics godoc
 // @Summary endpoint to ten latest books and members
 // @Description get analytics

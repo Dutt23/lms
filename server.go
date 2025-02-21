@@ -8,6 +8,7 @@ import (
 	"github.com/dutt23/lms/api"
 	cache "github.com/dutt23/lms/cache"
 	"github.com/dutt23/lms/config"
+	"github.com/dutt23/lms/middleware"
 	"github.com/dutt23/lms/pkg/connectors"
 	service "github.com/dutt23/lms/services"
 	"github.com/dutt23/lms/token"
@@ -100,6 +101,7 @@ func (server *Server) setupRouter(opts *routerOpts) {
 	server.addMemberRoutes(apiv1, opts)
 	server.addLoanRoutes(apiv1, opts)
 	server.addAnalyticsRoutes(apiv1, opts)
+	server.addAuthRoutes(apiv1, opts)
 	// authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.tokenMaker))
 	server.E = router
 }
@@ -134,4 +136,11 @@ func (server *Server) addLoanRoutes(grp *gin.RouterGroup, opts *routerOpts) {
 func (server *Server) addAnalyticsRoutes(grp *gin.RouterGroup, opts *routerOpts) {
 	analyticsHandler := api.NewAnalyticsApi(server.config, opts.bookService, opts.memberService, opts.analyticsService)
 	grp.GET("/analytics", analyticsHandler.GetAnalytics)
+}
+
+func (server *Server) addAuthRoutes(grp *gin.RouterGroup, opts *routerOpts) {
+	authHandler := api.NewAuthApi(server.config, opts.memberService, server.tokenMaker)
+	grp.POST("/login/user", authHandler.LoginUser)
+	authRoutes := grp.Group("/").Use(middleware.AuthMiddleware(server.tokenMaker))
+	authRoutes.POST("/auth/check", authHandler.LoginUser)
 }

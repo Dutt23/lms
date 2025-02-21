@@ -49,3 +49,12 @@ func (service *memberService) GetMembers(ctx context.Context, lastId uint64, pag
 	}
 	return members, nil
 }
+
+func (service *memberService) GetMemberByEmail(ctx context.Context, email string) (*model.Member, error) {
+	db := service.db.DB(ctx)
+	var member *model.Member
+	if err := db.Where("email = ?", email).Find(&member).Error; err != nil {
+		return nil, err
+	}
+	return member, nil
+}
