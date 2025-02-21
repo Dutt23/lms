@@ -75,7 +75,7 @@ func (processor *analyticsTaskProcessor) Process(ctx context.Context, task *asyn
 		return fmt.Errorf("unable to un-marshal json for task %w", asynq.SkipRetry)
 	}
 	go processor.updateBookMonthCount(ctx, *payload.Book, *payload.Loan)
-	go processor.updateAuthorWeeklyCount(ctx, *payload.Book, *payload.Loan)
+	go processor.updateAuthorWeeklyCount(ctx, *payload.Member, *payload.Loan)
 	return nil
 }
 
@@ -87,9 +87,9 @@ func (processor *analyticsTaskProcessor) updateBookMonthCount(ctx context.Contex
 	return nil
 }
 
-func (processor *analyticsTaskProcessor) updateAuthorWeeklyCount(ctx context.Context, book model.Book, loan model.BookLoan) error {
+func (processor *analyticsTaskProcessor) updateAuthorWeeklyCount(ctx context.Context, member model.Member, loan model.BookLoan) error {
 	cache := processor.cache.DB(ctx)
-	key := fmt.Sprintf("SET_INTERNAL_ANALYTICS_MEMBER_%d", loan.MemberId)
+	key := fmt.Sprintf("SET_INTERNAL_ANALYTICS_MEMBER_%d", member.Id)
 	year, week := loan.LoanDate.ISOWeek()
 	m := fmt.Sprintf("%d/%d/%d", year, loan.LoanDate.Month(), week)
 	cache.ZIncrBy(ctx, key, 1, m)

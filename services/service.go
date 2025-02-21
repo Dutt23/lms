@@ -15,6 +15,7 @@ type BookService interface {
 }
 type MemberService interface {
 	GetMember(ctx context.Context, memberId uint64) (*model.Member, error)
+	GetMembers(ctx context.Context, lastId uint64, pageSize int) ([]*model.Member, error)
 }
 
 type LoanService interface {
@@ -27,4 +28,5 @@ type LoanService interface {
 
 type AnalyticsService interface {
 	GetBookListAnalytics(ctx context.Context, bookIds []uint64) (*cache.BookAnalytics, error)
+	GetMemberListAnalytics(ctx context.Context, memberIds []uint64) (*cache.MemberAnalytics, error)
 }

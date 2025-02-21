@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/dutt23/lms/cache"
 	"github.com/dutt23/lms/model"
 	"github.com/dutt23/lms/pkg/connectors"
+	"gorm.io/gorm/clause"
 )
 
 type memberService struct {
@@ -29,4 +31,21 @@ func (service *memberService) GetMember(ctx context.Context, memberId uint64) (*
 		return nil, err
 	}
 	return member, nil
+}
+
+func (service *memberService) GetMembers(ctx context.Context, lastId uint64, pageSize int) ([]*model.Member, error) {
+	db := service.db.DB(ctx)
+	var members []*model.Member
+	qry := db.Model(model.Member{}).Where("id > ?", lastId).Limit(pageSize)
+
+	tx := qry.Order(clause.OrderByColumn{
+		Column: clause.Column{Name: "join_date"},
+		Desc:   true,
+	}).Find(&members)
+
+	if tx.Error != nil {
+		fmt.Println("not able to find any loans", tx.Error)
+		return nil, tx.Error
+	}
+	return members, nil
 }

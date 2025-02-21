@@ -138,7 +138,7 @@ func (cache *bookCache) GetBookAnalytics(c context.Context, bookIds []uint64) (*
 				Count: uint64(r.Score),
 			}
 		}
-		bookAnalytics.Analytics = bookFreq
+		bookAnalytics.BookFrequency = bookFreq
 		id := strings.Replace(name, "SET_INTERNAL_ANALYTICS_BOOK_", "", -1)
 		analytics[id] = bookAnalytics
 	}

@@ -61,7 +61,7 @@ func NewServer(config *config.AppConfig) (*Server, error) {
 	bookservice := service.NewBookService(server.DB, bookCache)
 	memberService := service.NewMemberService(server.DB, memberCache)
 	loanService := service.NewLoanService(server.DB)
-	analyticsService := service.NewAnalyticsService(bookCache)
+	analyticsService := service.NewAnalyticsService(bookCache, memberCache)
 
 	redisOpts := asynq.RedisClientOpt{
 		Addr: "0.0.0.0:6379",
@@ -132,6 +132,6 @@ func (server *Server) addLoanRoutes(grp *gin.RouterGroup, opts *routerOpts) {
 }
 
 func (server *Server) addAnalyticsRoutes(grp *gin.RouterGroup, opts *routerOpts) {
-	analyticsHandler := api.NewAnalyticsApi(server.config, opts.bookService, opts.analyticsService)
+	analyticsHandler := api.NewAnalyticsApi(server.config, opts.bookService, opts.memberService, opts.analyticsService)
 	grp.GET("/analytics", analyticsHandler.GetAnalytics)
 }

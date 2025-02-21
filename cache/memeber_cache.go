@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/dutt23/lms/model"
 	"github.com/dutt23/lms/pkg/connectors"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/exp/rand"
 )
 
@@ -17,6 +19,7 @@ type MemberCache interface {
 	GetMember(c context.Context, memberId uint64) *model.Member
 	DoesMemberExist(c context.Context, memberId uint64) bool
 	DeleteMember(c context.Context, memberId uint64) error
+	GetMemberAnalytics(c context.Context, memberIds []uint64) (*MemberAnalytics, error)
 }
 
 type memberCache struct {
@@ -97,4 +100,45 @@ func (cache *memberCache) DeleteMember(c context.Context, memberId uint64) error
 	db := cache.conn.DB(c)
 	bookKey := CacheKey(c, "SET_MEMBER", fmt.Sprintf("%d", memberId))
 	return db.Del(c, bookKey).Err()
+}
+
+func (cache *memberCache) GetMemberAnalytics(c context.Context, memberIds []uint64) (*MemberAnalytics, error) {
+	db := cache.conn.DB(c)
+	pipe := db.Pipeline()
+
+	for _, memberId := range memberIds {
+		key := fmt.Sprintf("SET_INTERNAL_ANALYTICS_MEMBER_%d", memberId)
+		pipe.ZRangeWithScores(c, key, 0, 10)
+	}
+
+	res, err := pipe.Exec(c)
+
+	if err != nil {
+		fmt.Println("Error occured here ", err)
+		return nil, err
+	}
+
+	analytics := make(map[string]*MemberAnalytic)
+	for _, result := range res {
+		zrangeRes := result.(*redis.ZSliceCmd)
+		memberAnalytics := &MemberAnalytic{}
+		memberFreq := make([]*MemberFreq, len(zrangeRes.Val()))
+		args := result.Args()
+		name := args[1].(string)
+		// scores := args[4].(interface{})
+		// fmt.Println(result.
+		for idx, r := range zrangeRes.Val() {
+			memberFreq[idx] = &MemberFreq{
+				Week:  r.Member.(string),
+				Count: uint64(r.Score),
+			}
+		}
+		memberAnalytics.MemberFrequency = memberFreq
+		id := strings.Replace(name, "SET_INTERNAL_ANALYTICS_MEMBER_", "", -1)
+		analytics[id] = memberAnalytics
+	}
+
+	resp := &MemberAnalytics{}
+	resp.Analytics = analytics
+	return resp, nil
 }

@@ -17,11 +17,24 @@ type BookAnalytics struct {
 }
 
 type BookAnalytic struct {
-	Analytics []*BookFreq `json:"analytics"`
+	BookFrequency []*BookFreq `json:"book_frequency"`
 }
 
 type BookFreq struct {
 	Month string `json:"month"`
+	Count uint64 `json:"count"`
+}
+
+type MemberAnalytics struct {
+	Analytics map[string]*MemberAnalytic `json:"member_analytics"`
+}
+
+type MemberAnalytic struct {
+	MemberFrequency []*MemberFreq `json:"member_frequency"`
+}
+
+type MemberFreq struct {
+	Week  string `json:"week"`
 	Count uint64 `json:"count"`
 }
 

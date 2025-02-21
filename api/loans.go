@@ -72,7 +72,7 @@ type getLoansRequestBody struct {
 // @Accept json
 // @Produce json
 // @Param book body addLoanRequestBody true "Loan data"
-// @Success 200 {object} model.Loan
+// @Success 200 {object} model.BookLoan
 // @Router /v1/loans [post]
 func (api *loansApi) AddLoan(ctx *gin.Context) {
 	var req addLoanRequestBody
@@ -120,7 +120,7 @@ func (api *loansApi) AddLoan(ctx *gin.Context) {
 // @Accept json
 // @Produce json
 // @param id path integer false "loan id"
-// @Success 200 {object} []model.Loan
+// @Success 200 {object} []model.BookLoan
 // @Router /v1/loans/:id [get]
 func (api *loansApi) GetLoan(ctx *gin.Context) {
 	var req getLoanRequestBody
@@ -181,7 +181,7 @@ func (api *loansApi) UpdateLoan(ctx *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param loanListParams body getLoansRequestBody true "Loan data"
-// @Success 200 {object} []model.Loan
+// @Success 200 {object} []model.BookLoan
 // @Router /v1/loans [get]
 func (api *loansApi) GetLoans(ctx *gin.Context) {
 	var req getLoansRequestBody
