@@ -8,6 +8,7 @@ import (
 
 	"github.com/dutt23/lms/config"
 	_ "github.com/dutt23/lms/docs"
+	"github.com/dutt23/lms/workers"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
@@ -37,9 +38,12 @@ func main() {
 	}
 	appRunner.server = s
 	appRunner.Init(ctx)
-	defer appRunner.Close(ctx)
+	defer appRunner.close(ctx)
+
 	runMigrations(cfg.MigrationUrl, cfg.DBSource)
 	appRunner.server.E.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	go appRunner.startProcessors(cfg)
+
 	appRunner.server.E.Run(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port))
 }
 
@@ -83,7 +87,7 @@ func (app *AppRunner) Init(ctx context.Context) error {
 	return nil
 }
 
-func (app *AppRunner) Close(ctx context.Context) {
+func (app *AppRunner) close(ctx context.Context) {
 	if len(app.Closeable) > 0 {
 		fmt.Println("there are closeable references to closed")
 		for _, closeable := range app.Closeable {
@@ -92,6 +96,15 @@ func (app *AppRunner) Close(ctx context.Context) {
 				fmt.Println("error while closing %v", err)
 			}
 		}
+	}
+}
+
+func (app *AppRunner) startProcessors(config *config.AppConfig) {
+	analyticsProcessor := workers.NewAnalyticsTaskProcessor(config)
+	fmt.Println("starting analytics processor")
+
+	if err := analyticsProcessor.Start(); err != nil {
+		fmt.Println("Unable to start analytics processor ", err)
 	}
 }
 
