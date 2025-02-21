@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/dutt23/lms/cache"
 	"github.com/dutt23/lms/model"
 	"github.com/dutt23/lms/pkg/connectors"
+	"gorm.io/gorm/clause"
 )
 
 type bookService struct {
@@ -51,4 +53,21 @@ func (service *bookService) ChangeAvailableCopies(ctx context.Context, bookId ui
 	db.Save(res)
 	service.cache.StoreBookMetaInCache(ctx, res)
 	return nil
+}
+
+func (service *bookService) GetBooks(ctx context.Context, lastId uint64, pageSize int) ([]*model.Book, error) {
+	db := service.db.DB(ctx)
+	var books []*model.Book
+	qry := db.Model(model.Book{}).Where("id > ?", lastId).Limit(pageSize)
+
+	tx := qry.Order(clause.OrderByColumn{
+		Column: clause.Column{Name: "published_date"},
+		Desc:   true,
+	}).Find(&books)
+
+	if tx.Error != nil {
+		fmt.Println("not able to find any loans", tx.Error)
+		return nil, tx.Error
+	}
+	return books, nil
 }

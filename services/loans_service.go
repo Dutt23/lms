@@ -18,10 +18,10 @@ func NewLoanService(db connectors.SqliteConnector) LoanService {
 	return &loanService{db}
 }
 
-func (service *loanService) SaveLoan(ctx context.Context, memberId, bookId uint64, returnDate *time.Time) (*model.Loan, error) {
+func (service *loanService) SaveLoan(ctx context.Context, memberId, bookId uint64, returnDate *time.Time) (*model.BookLoan, error) {
 	t := time.Now()
 
-	loan := &model.Loan{
+	loan := &model.BookLoan{
 		BookId:   bookId,
 		MemberId: memberId,
 		LoanDate: t,
@@ -34,9 +34,9 @@ func (service *loanService) SaveLoan(ctx context.Context, memberId, bookId uint6
 	return loan, nil
 }
 
-func (service *loanService) GetLoan(ctx context.Context, loanId uint64) (*model.Loan, error) {
+func (service *loanService) GetLoan(ctx context.Context, loanId uint64) (*model.BookLoan, error) {
 	db := service.db.DB(ctx)
-	var loan *model.Loan
+	var loan *model.BookLoan
 	if err := db.Last(&loan, loanId).Error; err != nil {
 		return nil, err
 	}
@@ -44,10 +44,10 @@ func (service *loanService) GetLoan(ctx context.Context, loanId uint64) (*model.
 	return loan, nil
 }
 
-func (service *loanService) GetLoans(ctx context.Context, lastId uint64, pageSize int) ([]*model.Loan, error) {
+func (service *loanService) GetLoans(ctx context.Context, lastId uint64, pageSize int) ([]*model.BookLoan, error) {
 	db := service.db.DB(ctx)
-	var loans []*model.Loan
-	qry := db.Model(model.Loan{}).Where("id > ?", lastId).Limit(pageSize)
+	var loans []*model.BookLoan
+	qry := db.Model(model.BookLoan{}).Where("id > ?", lastId).Limit(pageSize)
 
 	tx := qry.Order(clause.OrderByColumn{
 		Column: clause.Column{Name: "published_date"},
@@ -63,7 +63,7 @@ func (service *loanService) GetLoans(ctx context.Context, lastId uint64, pageSiz
 
 func (service *loanService) CompleteLoan(ctx context.Context, loanId uint64) error {
 	db := service.db.DB(ctx)
-	var loan *model.Loan
+	var loan *model.BookLoan
 	if err := db.Last(&loan, loanId).Error; err != nil {
 		return err
 	}
@@ -74,5 +74,5 @@ func (service *loanService) CompleteLoan(ctx context.Context, loanId uint64) err
 
 func (service *loanService) DeleteLoan(ctx context.Context, loanId uint64) error {
 	db := service.db.DB(ctx)
-	return db.Delete(&model.Loan{}, loanId).Error
+	return db.Delete(&model.BookLoan{}, loanId).Error
 }

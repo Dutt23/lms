@@ -77,6 +77,7 @@ type getLoansRequestBody struct {
 func (api *loansApi) AddLoan(ctx *gin.Context) {
 	var req addLoanRequestBody
 
+	fmt.Println("eheheh")
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -92,7 +93,7 @@ func (api *loansApi) AddLoan(ctx *gin.Context) {
 	//TODO: Add cache check here
 
 	if book.AvailableCopies <= 0 {
-		ctx.JSON(http.StatusBadRequest, errors.New("not enough copies available of this book"))
+		ctx.JSON(http.StatusBadRequest, errorResponse(errors.New("not enough copies available of this book")))
 		return
 	}
 
@@ -245,7 +246,7 @@ func (api *loansApi) DeleteLoan(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-func (api *loansApi) startAnalytics(loan *model.Loan, book *model.Book) {
+func (api *loansApi) startAnalytics(loan *model.BookLoan, book *model.Book) {
 	ctx := context.Background()
 	member, err := api.memberService.GetMember(ctx, loan.MemberId)
 
@@ -260,7 +261,7 @@ func (api *loansApi) startAnalytics(loan *model.Loan, book *model.Book) {
 	}
 	opts := []asynq.Option{
 		asynq.MaxRetry(10),
-		asynq.ProcessIn(10 * time.Second),
+		asynq.ProcessIn(2 * time.Second),
 		asynq.Queue(workers.CriticalQueue),
 	}
 	err = api.taskDistributor.DistributeBooksAnalyticsPayload(ctx, payload, opts...)

@@ -23,9 +23,9 @@ type analyticsTaskProcessor struct {
 }
 
 type BookAnalyticsPayload struct {
-	Book   *model.Book   `json:"book"`
-	Loan   *model.Loan   `json:"loan"`
-	Member *model.Member `json:"member"`
+	Book   *model.Book     `json:"book"`
+	Loan   *model.BookLoan `json:"loan"`
+	Member *model.Member   `json:"member"`
 }
 
 func (distributor RedisTaskDistributor) DistributeBooksAnalyticsPayload(ctx context.Context, payload *BookAnalyticsPayload, opts ...asynq.Option) error {
@@ -74,7 +74,25 @@ func (processor *analyticsTaskProcessor) Process(ctx context.Context, task *asyn
 		fmt.Println("Error in queue ", err)
 		return fmt.Errorf("unable to un-marshal json for task %w", asynq.SkipRetry)
 	}
+	go processor.updateBookMonthCount(ctx, *payload.Book, *payload.Loan)
+	go processor.updateAuthorWeeklyCount(ctx, *payload.Book, *payload.Loan)
+	return nil
+}
 
+func (processor *analyticsTaskProcessor) updateBookMonthCount(ctx context.Context, book model.Book, loan model.BookLoan) error {
+	cache := processor.cache.DB(ctx)
+	key := fmt.Sprintf("SET_INTERNAL_ANALYTICS_BOOK_%d", book.Id)
+	m := fmt.Sprintf("%d/%d", loan.LoanDate.Year(), loan.LoanDate.Month())
+	cache.ZIncrBy(ctx, key, 1, m)
+	return nil
+}
+
+func (processor *analyticsTaskProcessor) updateAuthorWeeklyCount(ctx context.Context, book model.Book, loan model.BookLoan) error {
+	cache := processor.cache.DB(ctx)
+	key := fmt.Sprintf("SET_INTERNAL_ANALYTICS_MEMBER_%d", loan.MemberId)
+	year, week := loan.LoanDate.ISOWeek()
+	m := fmt.Sprintf("%d/%d/%d", year, loan.LoanDate.Month(), week)
+	cache.ZIncrBy(ctx, key, 1, m)
 	return nil
 }
 

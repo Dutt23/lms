@@ -34,7 +34,10 @@ type routerOpts struct {
 	memberCache   cache.MemberCache
 	memberService service.MemberService
 
-	loanService     service.LoanService
+	loanService service.LoanService
+
+	analyticsService service.AnalyticsService
+
 	taskDistributor workers.TaskDistributor
 }
 
@@ -58,6 +61,7 @@ func NewServer(config *config.AppConfig) (*Server, error) {
 	bookservice := service.NewBookService(server.DB, bookCache)
 	memberService := service.NewMemberService(server.DB, memberCache)
 	loanService := service.NewLoanService(server.DB)
+	analyticsService := service.NewAnalyticsService(bookCache)
 
 	redisOpts := asynq.RedisClientOpt{
 		Addr: "0.0.0.0:6379",
@@ -72,6 +76,9 @@ func NewServer(config *config.AppConfig) (*Server, error) {
 		memberService,
 
 		loanService,
+
+		analyticsService,
+
 		taskDistributor,
 	}
 	// Add routes
@@ -91,6 +98,8 @@ func (server *Server) setupRouter(opts *routerOpts) {
 	apiv1 := router.Group("/v1/")
 	server.addBookRoutes(apiv1, opts)
 	server.addMemberRoutes(apiv1, opts)
+	server.addLoanRoutes(apiv1, opts)
+	server.addAnalyticsRoutes(apiv1, opts)
 	// authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.tokenMaker))
 	server.E = router
 }
@@ -120,4 +129,9 @@ func (server *Server) addLoanRoutes(grp *gin.RouterGroup, opts *routerOpts) {
 	grp.GET("/loans/:id", loansHandler.GetLoan)
 	grp.PUT("/loans/:id", loansHandler.UpdateLoan)
 	grp.DELETE("/loans/:id", loansHandler.DeleteLoan)
+}
+
+func (server *Server) addAnalyticsRoutes(grp *gin.RouterGroup, opts *routerOpts) {
+	analyticsHandler := api.NewAnalyticsApi(server.config, opts.bookService, opts.analyticsService)
+	grp.GET("/analytics", analyticsHandler.GetAnalytics)
 }

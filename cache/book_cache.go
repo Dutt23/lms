@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/dutt23/lms/model"
 	"github.com/dutt23/lms/pkg/connectors"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/exp/rand"
 )
 
@@ -17,6 +19,7 @@ type BookCache interface {
 	GetBook(c context.Context, bookId uint64) (*model.Book, error)
 	DeleteBook(c context.Context, bookId uint64) error
 	IsIsbnUnique(c context.Context, isbn string) bool
+	GetBookAnalytics(c context.Context, bookIds []uint64) (*BookAnalytics, error)
 }
 
 type bookCache struct {
@@ -31,7 +34,6 @@ func (cache *bookCache) StoreBookMetaInCache(c context.Context, book *model.Book
 	bookKey := CacheKey(c, "SET_BOOK", fmt.Sprintf("%d", book.Id))
 	bookCountKey := CacheKey(c, "SET_BOOK", book.Isbn)
 
-	fmt.Println(cache)
 	db := cache.conn.DB(c)
 	pipe := db.Pipeline()
 	bookExpiryTime := 1 * time.Hour
@@ -69,7 +71,6 @@ func (cache *bookCache) IsIsbnUnique(c context.Context, isbn string) bool {
 	fmt.Println(cache)
 	db := cache.conn.DB(c)
 	res, err := db.BFExists(c, BOOK_ISBN_FILTER, isbn).Result()
-
 	if err != nil {
 		fmt.Errorf("unable to determine result %w", err)
 		// This will go to the database for confirmation
@@ -104,4 +105,45 @@ func (cache *bookCache) GetBook(c context.Context, bookId uint64) (*model.Book, 
 		return nil, err
 	}
 	return book, nil
+}
+
+func (cache *bookCache) GetBookAnalytics(c context.Context, bookIds []uint64) (*BookAnalytics, error) {
+	db := cache.conn.DB(c)
+	pipe := db.Pipeline()
+
+	for _, bookId := range bookIds {
+		key := fmt.Sprintf("SET_INTERNAL_ANALYTICS_BOOK_%d", bookId)
+		pipe.ZRangeWithScores(c, key, 0, 10)
+	}
+
+	res, err := pipe.Exec(c)
+
+	if err != nil {
+		fmt.Println("Error occured here ", err)
+		return nil, err
+	}
+
+	analytics := make(map[string]*BookAnalytic)
+	for _, result := range res {
+		zrangeRes := result.(*redis.ZSliceCmd)
+		bookAnalytics := &BookAnalytic{}
+		bookFreq := make([]*BookFreq, len(zrangeRes.Val()))
+		args := result.Args()
+		name := args[1].(string)
+		// scores := args[4].(interface{})
+		// fmt.Println(result.
+		for idx, r := range zrangeRes.Val() {
+			bookFreq[idx] = &BookFreq{
+				Month: r.Member.(string),
+				Count: uint64(r.Score),
+			}
+		}
+		bookAnalytics.Analytics = bookFreq
+		id := strings.Replace(name, "SET_INTERNAL_ANALYTICS_BOOK_", "", -1)
+		analytics[id] = bookAnalytics
+	}
+
+	resp := &BookAnalytics{}
+	resp.Analytics = analytics
+	return resp, nil
 }
