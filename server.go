@@ -102,7 +102,6 @@ func (server *Server) setupRouter(opts *routerOpts) {
 	server.addLoanRoutes(apiv1, opts)
 	server.addAnalyticsRoutes(apiv1, opts)
 	server.addAuthRoutes(apiv1, opts)
-	// authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.tokenMaker))
 	server.E = router
 }
 

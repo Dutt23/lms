@@ -34,6 +34,15 @@ type loginUserResponseBody struct {
 	RefreshTokenExpiresAt time.Time `json:"refresh_token_expired_at"`
 }
 
+// LoginUser godoc
+// @Summary endpoint to login a user
+// @Description login a user
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param book body loginUserRequestBody true "Auth data"
+// @Success 200 {object} loginUserResponseBody
+// @Router /v1/login/user [post]
 func (api *authApi) LoginUser(ctx *gin.Context) {
 	var req loginUserRequestBody
 
@@ -82,6 +91,14 @@ func (api *authApi) LoginUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+// CheckAuth godoc
+// @Summary endpoint to check auth routes
+// @Description auth routes check
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200
+// @Router /v1/auth/check [post]
 func (api *authApi) CheckAuth(ctx *gin.Context) {
   authPayload := ctx.MustGet(middleware.AuthPayloadKey).(*token.Payload)
   fmt.Println(authPayload)
