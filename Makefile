@@ -5,6 +5,7 @@ DB_URL=sqlite3://./lms.db
 .PHONY: migratedown
 .PHONY: swagger
 .PHONY: start_cache
+.PHONY: server
 
 new_migration: 
 	migrate create -ext sql -dir db/migration -seq $(name)
@@ -20,3 +21,6 @@ start_cache:
 
 swagger:
 	swag init -g main.go -o docs
+
+server:
+	go run .
