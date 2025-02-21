@@ -1,5 +1,5 @@
 lms
-.env
+# .env
 lms.db
 docs.go
 swagger.json
