@@ -25,6 +25,16 @@ type Server struct {
 	memberFilter *bloom.BloomFilter
 }
 
+type routerOpts struct {
+	bookCache   cache.BookCache
+	bookService service.BookService
+
+	memberCache   cache.MemberCache
+	memberService service.MemberService
+
+	loanService service.LoanService
+}
+
 func NewServer(config *config.AppConfig) (*Server, error) {
 	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
 	if err != nil {
@@ -35,10 +45,27 @@ func NewServer(config *config.AppConfig) (*Server, error) {
 	memberFilter := bloom.NewWithEstimates(1000000, 0.01)
 	server := &Server{tokenMaker: tokenMaker, config: config, bookFilter: bookFilter, memberFilter: memberFilter}
 
+	// Init cache
+	bookCache := cache.NewBookCache(server.Cache)
+	memberCache := cache.NewMemberCache(server.Cache)
+
+	// Init Service
+	bookservice := service.NewBookService(server.DB, bookCache)
+	memberService := service.NewMemberService(server.DB, memberCache)
+	loanService := service.NewLoanService(server.DB)
+
+	opts := &routerOpts{
+		bookCache,
+		bookservice,
+		memberCache,
+		memberService,
+
+		loanService,
+	}
 	// Init storages
 	server.AllConnectors()
 	// Add routes
-	server.setupRouter()
+	server.setupRouter(opts)
 	return server, nil
 }
 
@@ -49,18 +76,17 @@ func (s *Server) AllConnectors() {
 	s.Cache = cache
 }
 
-func (server *Server) setupRouter() {
+func (server *Server) setupRouter(opts *routerOpts) {
 	router := gin.Default()
 	apiv1 := router.Group("/v1/")
-	server.addBookRoutes(apiv1)
-	server.addMemberRoutes(apiv1)
+	server.addBookRoutes(apiv1, opts)
+	server.addMemberRoutes(apiv1, opts)
 	// authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.tokenMaker))
 	server.E = router
 }
 
-func (server *Server) addBookRoutes(grp *gin.RouterGroup) {
-	cache := cache.NewBookCache(server.Cache)
-	bookHandler := api.NewBooksApi(server.config, server.DB, cache, service.NewBookService(server.DB, cache))
+func (server *Server) addBookRoutes(grp *gin.RouterGroup, opts *routerOpts) {
+	bookHandler := api.NewBooksApi(server.config, server.DB, opts.bookCache, opts.bookService)
 	grp.POST("/books", bookHandler.AddBook)
 	grp.GET("/books", bookHandler.GetBooks)
 	grp.GET("/books/:id", bookHandler.GetBook)
@@ -68,11 +94,20 @@ func (server *Server) addBookRoutes(grp *gin.RouterGroup) {
 	grp.DELETE("/books/:id", bookHandler.DeleteBook)
 }
 
-func (server *Server) addMemberRoutes(grp *gin.RouterGroup) {
-	memberHandler := api.NewMembersApi(server.config, server.DB, cache.NewMemberCache(server.Cache))
+func (server *Server) addMemberRoutes(grp *gin.RouterGroup, opts *routerOpts) {
+	memberHandler := api.NewMembersApi(server.config, server.DB, opts.memberCache, opts.memberService)
 	grp.POST("/members", memberHandler.AddMember)
 	grp.GET("/members", memberHandler.GetMembers)
 	grp.GET("/members/:id", memberHandler.GetMember)
 	grp.PUT("/members/:id", memberHandler.UpdateMember)
-	grp.DELETE("/member/:id", memberHandler.DeleteMember)
+	grp.DELETE("/members/:id", memberHandler.DeleteMember)
+}
+
+func (server *Server) addLoanRoutes(grp *gin.RouterGroup, opts *routerOpts) {
+	loansHandler := api.NewLoansApi(server.config, server.DB, opts.bookService, opts.memberService, opts.loanService)
+	grp.POST("/loans", loansHandler.AddLoan)
+	grp.GET("/loans", loansHandler.GetLoans)
+	grp.GET("/loans/:id", loansHandler.GetLoan)
+	grp.PUT("/loans/:id", loansHandler.UpdateLoan)
+	grp.DELETE("/loans/:id", loansHandler.DeleteLoan)
 }

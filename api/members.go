@@ -17,10 +17,10 @@ import (
 )
 
 type membersApi struct {
-	config *config.AppConfig
-	db     connectors.SqliteConnector
-	cache  cache.MemberCache
-  service service.MemberService
+	config  *config.AppConfig
+	db      connectors.SqliteConnector
+	cache   cache.MemberCache
+	service service.MemberService
 }
 
 func NewMembersApi(config *config.AppConfig, db connectors.SqliteConnector, cache cache.MemberCache, service service.MemberService) *membersApi {
@@ -28,7 +28,7 @@ func NewMembersApi(config *config.AppConfig, db connectors.SqliteConnector, cach
 		config,
 		db,
 		cache,
-    service,
+		service,
 	}
 }
 
@@ -109,12 +109,12 @@ func (api *membersApi) GetMember(ctx *gin.Context) {
 		return
 	}
 
-  member, err := api.service.GetMember(ctx, req.ID)
-  if err != nil {
-    fmt.Errorf("error : %w", err)
+	member, err := api.service.GetMember(ctx, req.ID)
+	if err != nil {
+		fmt.Errorf("error : %w", err)
 		ctx.JSON(http.StatusInternalServerError, errorResponse(errors.New(fmt.Sprintf("unable to locate member with Id %d", req.ID))))
-		return 
-  }
+		return
+	}
 
 	c := context.Background()
 	go api.storeMemberMeta(c, member)

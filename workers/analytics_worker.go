@@ -20,7 +20,7 @@ type analyticsTaskProcessor struct {
 
 func NewAnalyticsTaskProcessor(config *config.AppConfig) Proccessor {
 	redisOpts := asynq.RedisClientOpt{
-		Addr: fmt.Sprintf("%s:%s", config.CacheConfig.Host, config.CacheConfig.Port),
+		Addr: "0.0.0.0:6379",
 	}
 	server := asynq.NewServer(redisOpts, asynq.Config{
 		Queues: map[string]int{

@@ -14,7 +14,7 @@ import (
 type BookCache interface {
 	StoreBookMetaInCache(c context.Context, book *model.Book) error
 	DoesBookExist(c context.Context, bookId uint64) bool
-	GetBook(c context.Context, bookId uint64) *model.Book
+	GetBook(c context.Context, bookId uint64) (*model.Book, error)
 	DeleteBook(c context.Context, bookId uint64) error
 	IsIsbnUnique(c context.Context, isbn string) bool
 }
@@ -82,7 +82,7 @@ func (cache *bookCache) DeleteBook(c context.Context, bookId uint64) error {
 	return db.Del(c, bookKey).Err()
 }
 
-func (cache *bookCache) GetBook(c context.Context, bookId uint64) *model.Book {
+func (cache *bookCache) GetBook(c context.Context, bookId uint64) (*model.Book, error) {
 	db := cache.conn.DB(c)
 	bookKey := CacheKey(c, "SET_BOOK", fmt.Sprintf("%d", bookId))
 	res, err := db.Get(c, bookKey).Bytes()
@@ -90,7 +90,7 @@ func (cache *bookCache) GetBook(c context.Context, bookId uint64) *model.Book {
 	if err != nil {
 		fmt.Println(fmt.Errorf("unable to get result from cache %w", err))
 		// This will go to the database for confirmation
-		return nil
+		return nil, err
 	}
 
 	book := &model.Book{}
@@ -99,7 +99,7 @@ func (cache *bookCache) GetBook(c context.Context, bookId uint64) *model.Book {
 	if err != nil {
 		fmt.Println(fmt.Errorf("unable to get result from cache %w", err))
 		// This will go to the database for confirmation
-		return nil
+		return nil, err
 	}
-	return book
+	return book, nil
 }

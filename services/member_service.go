@@ -7,13 +7,14 @@ import (
 	"github.com/dutt23/lms/model"
 	"github.com/dutt23/lms/pkg/connectors"
 )
+
 type memberService struct {
-	db connectors.SqliteConnector
-  cache  cache.MemberCache
+	db    connectors.SqliteConnector
+	cache cache.MemberCache
 }
 
-func NewMemberService(db connectors.SqliteConnector, cache  cache.MemberCache) MemberService {
-  return &memberService{db, cache}
+func NewMemberService(db connectors.SqliteConnector, cache cache.MemberCache) MemberService {
+	return &memberService{db, cache}
 }
 
 func (service *memberService) GetMember(ctx context.Context, memberId uint64) (*model.Member, error) {
@@ -27,5 +28,5 @@ func (service *memberService) GetMember(ctx context.Context, memberId uint64) (*
 	if err := db.Last(&member, memberId).Error; err != nil {
 		return nil, err
 	}
-  return member, nil
+	return member, nil
 }

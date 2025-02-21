@@ -17,9 +17,9 @@ import (
 )
 
 type booksApi struct {
-	config *config.AppConfig
-	db     connectors.SqliteConnector
-	cache  cache.BookCache
+	config  *config.AppConfig
+	db      connectors.SqliteConnector
+	cache   cache.BookCache
 	service service.BookService
 }
 
@@ -40,7 +40,7 @@ type addBookRequestBody struct {
 	NumberOfPages   uint64    `json:"number_of_pages" binding:"required,numeric,gt=1"`
 	CoverURL        string    `json:"cover_url" binding:"gt=1"`
 	Language        string    `json:"language" binding:"required,alpha,gt=1"`
-	AvailableCopies uint64    `json:"available_copies" binding:"required,numeric,gt=1"`
+	AvailableCopies int64     `json:"available_copies" binding:"required,numeric,gt=1"`
 }
 
 type updateBookRequestBody struct {
@@ -55,7 +55,7 @@ type deleteBookRequestBody struct {
 	getBookRequestBody
 }
 
-type criteria struct {
+type Criteria struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 	Logic string `json:"logic"`
@@ -63,7 +63,7 @@ type criteria struct {
 
 type getBooksRequestBody struct {
 	LastId    int32       `json:"last_id"`
-	Criterias []*criteria `json:"criterias"`
+	Criterias []*Criteria `json:"criterias"`
 	PageSize  int32       `json:"page_size"`
 }
 
@@ -186,7 +186,7 @@ func (api *booksApi) GetBook(ctx *gin.Context) {
 	if err != nil {
 		fmt.Errorf("error : %w", err)
 		ctx.JSON(http.StatusInternalServerError, errorResponse(errors.New(fmt.Sprintf("unable to locate book with Id %d", req.ID))))
-		return 
+		return
 	}
 
 	c := context.Background()

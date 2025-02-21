@@ -9,5 +9,5 @@ type Book struct {
 	NumberOfPages   uint64      `json:"number_of_pages"`
 	CoverImage      string      `json:"cover_image"`
 	Language        string      `json:"language"`
-	AvailableCopies uint64      `json:"available_copies"`
+	AvailableCopies int64       `json:"available_copies"`
 }

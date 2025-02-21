@@ -20,6 +20,7 @@ type AppConfig struct {
 	DbConfig          DBConfig    `mapstructure:"db" validate:"required"`
 	CacheConfig       CacheConfig `mapstructure:"cache" validate:"required"`
 	TokenSymmetricKey string      `mapstructure:"token_symmetric_key" validate:"required"`
+	QueuePort int                 `mapstructure:"queue_port" validate:"required"`
 }
 
 // reading config and intializing configs for application
