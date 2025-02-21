@@ -24,7 +24,7 @@ func (service *loanService) SaveLoan(ctx context.Context, memberId, bookId uint6
 	loan := &model.Loan{
 		BookId:   bookId,
 		MemberId: memberId,
-		LoanDate: model.TimeWrapper(t),
+		LoanDate: t,
 	}
 
 	//TODO: Add retry logic here
@@ -68,7 +68,7 @@ func (service *loanService) CompleteLoan(ctx context.Context, loanId uint64) err
 		return err
 	}
 
-	loan.ReturnDate = model.TimeWrapper(time.Now())
+	loan.ReturnDate = time.Now()
 	return db.Save(loan).Error
 }
 

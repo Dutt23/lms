@@ -79,7 +79,7 @@ func (api *membersApi) AddMember(ctx *gin.Context) {
 	member := &model.Member{
 		Email:    req.Email,
 		Name:     req.Name,
-		JoinDate: model.TimeWrapper(time.Now()),
+		JoinDate: time.Now(),
 	}
 
 	err := api.db.DB(ctx).Create(member).Error
@@ -233,7 +233,7 @@ func (api *membersApi) UpdateMember(ctx *gin.Context) {
 	member := &model.Member{
 		Email:    body.Email,
 		Name:     body.Name,
-		JoinDate: model.TimeWrapper(time.Now()),
+		JoinDate: time.Now(),
 	}
 
 	if err := api.db.DB(ctx).Save(member).Error; err != nil {

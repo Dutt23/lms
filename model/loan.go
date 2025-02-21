@@ -1,9 +1,11 @@
 package model
 
+import "time"
+
 type Loan struct {
 	Audited
-	BookId     uint64      `json:"book_id"`
-	MemberId   uint64      `json:"member_id"`
-	LoanDate   TimeWrapper `json:"loan_date"`
-	ReturnDate TimeWrapper `json:"return_date"`
+	BookId     uint64    `json:"book_id"`
+	MemberId   uint64    `json:"member_id"`
+	LoanDate   time.Time `json:"loan_date"`
+	ReturnDate time.Time `json:"return_date"`
 }

@@ -96,7 +96,7 @@ func (api *booksApi) AddBook(ctx *gin.Context) {
 	book := &model.Book{
 		Title:           req.Title,
 		Author:          req.Author,
-		PublishedDate:   model.TimeWrapper(req.PublishedDate),
+		PublishedDate:   req.PublishedDate,
 		Isbn:            req.Isbn,
 		NumberOfPages:   req.NumberOfPages,
 		CoverImage:      req.CoverURL,
@@ -230,7 +230,7 @@ func (api *booksApi) UpdateBook(ctx *gin.Context) {
 		},
 		Title:           body.Title,
 		Author:          body.Author,
-		PublishedDate:   model.TimeWrapper(body.PublishedDate),
+		PublishedDate:   body.PublishedDate,
 		Isbn:            body.Isbn,
 		NumberOfPages:   body.NumberOfPages,
 		CoverImage:      body.CoverURL,

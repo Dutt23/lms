@@ -11,7 +11,9 @@ import (
 	"github.com/dutt23/lms/pkg/connectors"
 	service "github.com/dutt23/lms/services"
 	"github.com/dutt23/lms/token"
+	"github.com/dutt23/lms/workers"
 	"github.com/gin-gonic/gin"
+	"github.com/hibiken/asynq"
 )
 
 type Server struct {
@@ -32,7 +34,8 @@ type routerOpts struct {
 	memberCache   cache.MemberCache
 	memberService service.MemberService
 
-	loanService service.LoanService
+	loanService     service.LoanService
+	taskDistributor workers.TaskDistributor
 }
 
 func NewServer(config *config.AppConfig) (*Server, error) {
@@ -54,6 +57,12 @@ func NewServer(config *config.AppConfig) (*Server, error) {
 	memberService := service.NewMemberService(server.DB, memberCache)
 	loanService := service.NewLoanService(server.DB)
 
+	redisOpts := asynq.RedisClientOpt{
+		Addr: "0.0.0.0:6379",
+	}
+	// Queue
+	taskDistributor := workers.NewRedisTaskDistributor(redisOpts)
+
 	opts := &routerOpts{
 		bookCache,
 		bookservice,
@@ -61,6 +70,7 @@ func NewServer(config *config.AppConfig) (*Server, error) {
 		memberService,
 
 		loanService,
+		taskDistributor,
 	}
 	// Init storages
 	server.AllConnectors()
@@ -104,7 +114,7 @@ func (server *Server) addMemberRoutes(grp *gin.RouterGroup, opts *routerOpts) {
 }
 
 func (server *Server) addLoanRoutes(grp *gin.RouterGroup, opts *routerOpts) {
-	loansHandler := api.NewLoansApi(server.config, server.DB, opts.bookService, opts.memberService, opts.loanService)
+	loansHandler := api.NewLoansApi(server.config, server.DB, opts.bookService, opts.memberService, opts.loanService, opts.taskDistributor)
 	grp.POST("/loans", loansHandler.AddLoan)
 	grp.GET("/loans", loansHandler.GetLoans)
 	grp.GET("/loans/:id", loansHandler.GetLoan)

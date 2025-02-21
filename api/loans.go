@@ -1,23 +1,28 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/dutt23/lms/config"
+	"github.com/dutt23/lms/model"
 	"github.com/dutt23/lms/pkg/connectors"
 	service "github.com/dutt23/lms/services"
+	"github.com/dutt23/lms/workers"
 	"github.com/gin-gonic/gin"
+	"github.com/hibiken/asynq"
 )
 
 type loansApi struct {
-	config        *config.AppConfig
-	db            connectors.SqliteConnector
-	bookService   service.BookService
-	memberService service.MemberService
-	loanService   service.LoanService
+	config          *config.AppConfig
+	db              connectors.SqliteConnector
+	bookService     service.BookService
+	memberService   service.MemberService
+	loanService     service.LoanService
+	taskDistributor workers.TaskDistributor
 }
 
 func NewLoansApi(config *config.AppConfig,
@@ -25,13 +30,15 @@ func NewLoansApi(config *config.AppConfig,
 	bookService service.BookService,
 	memberService service.MemberService,
 	loanService service.LoanService,
+	taskDistributor workers.TaskDistributor,
 ) *loansApi {
 	return &loansApi{
-		config:        config,
-		db:            db,
-		bookService:   bookService,
-		memberService: memberService,
-		loanService:   loanService,
+		config:          config,
+		db:              db,
+		bookService:     bookService,
+		memberService:   memberService,
+		loanService:     loanService,
+		taskDistributor: taskDistributor,
 	}
 }
 
@@ -101,6 +108,7 @@ func (api *loansApi) AddLoan(ctx *gin.Context) {
 		return
 	}
 
+	go api.startAnalytics(loan, book)
 	ctx.JSON(http.StatusCreated, loan)
 }
 
@@ -202,6 +210,13 @@ func (api *loansApi) GetLoans(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, loans)
 }
 
+// DeleteLoan godoc
+// @Summary endpoint to delete loan
+// @Description delete a loan
+// @Tags loan
+// @param id path integer false "loan id"
+// @Success 200
+// @Router /v1/loans/:id [delete]
 func (api *loansApi) DeleteLoan(ctx *gin.Context) {
 	var req deleteLoanRequestBody
 
@@ -228,4 +243,28 @@ func (api *loansApi) DeleteLoan(ctx *gin.Context) {
 		return
 	}
 	ctx.Status(http.StatusOK)
+}
+
+func (api *loansApi) startAnalytics(loan *model.Loan, book *model.Book) {
+	ctx := context.Background()
+	member, err := api.memberService.GetMember(ctx, loan.MemberId)
+
+	if err != nil {
+		fmt.Println("unable to enque task ", member)
+		return
+	}
+	payload := &workers.BookAnalyticsPayload{
+		Book: book,
+		Loan: loan,
+		Member: member,
+	}
+	opts := []asynq.Option{
+		asynq.MaxRetry(10),
+		asynq.ProcessIn(10 * time.Second),
+		asynq.Queue(workers.CriticalQueue),
+	}
+	err = api.taskDistributor.DistributeBooksAnalyticsPayload(ctx, payload, opts...)
+	if err != nil {
+		fmt.Println("unable to queue analytics task " , err)
+	}
 }

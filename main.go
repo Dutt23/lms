@@ -100,7 +100,7 @@ func (app *AppRunner) close(ctx context.Context) {
 }
 
 func (app *AppRunner) startProcessors(config *config.AppConfig) {
-	analyticsProcessor := workers.NewAnalyticsTaskProcessor(config)
+	analyticsProcessor := workers.NewAnalyticsTaskProcessor(config, app.server.Cache)
 	fmt.Println("starting analytics processor")
 
 	if err := analyticsProcessor.Start(); err != nil {
