@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bits-and-blooms/bloom/v3"
+	cache "github.com/dutt23/lms/cache"
 	"github.com/dutt23/lms/config"
 	"github.com/dutt23/lms/model"
 	"github.com/dutt23/lms/pkg/connectors"
@@ -15,6 +15,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm/clause"
 )
+
+type booksApi struct {
+	config *config.AppConfig
+	db     connectors.SqliteConnector
+	cache  cache.BookCache
+	service service.BookService
+}
+
+func NewBooksApi(config *config.AppConfig, db connectors.SqliteConnector, cache cache.BookCache, service service.BookService) *booksApi {
+	return &booksApi{
+		config,
+		db,
+		cache,
+		service,
+	}
+}
 
 type addBookRequestBody struct {
 	Title           string    `json:"title" binding:"required,gt=1"`
@@ -53,22 +69,6 @@ type getBooksRequestBody struct {
 
 type getBooksResponseBody struct {
 	Books []*model.Book `json:"books"`
-}
-
-type booksApi struct {
-	config *config.AppConfig
-	db     connectors.SqliteConnector
-	filter *bloom.BloomFilter
-	cache  service.BookCacheService
-}
-
-func NewBooksApi(config *config.AppConfig, db connectors.SqliteConnector, bookFilter *bloom.BloomFilter, cache service.BookCacheService) *booksApi {
-	return &booksApi{
-		config: config,
-		db:     db,
-		filter: bookFilter,
-		cache:  cache,
-	}
 }
 
 // AddBook godoc
@@ -181,19 +181,11 @@ func (api *booksApi) GetBook(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-
-	res := api.cache.GetBook(ctx, (req.ID))
-	if res != nil {
-		ctx.JSON(http.StatusOK, res)
-		return
-	}
-
-	db := api.db.DB(ctx)
-	var book *model.Book
-	if err := db.Last(&book, req.ID).Error; err != nil {
+	
+	book, err := api.service.GetBook(ctx, req.ID)
+	if err != nil {
 		fmt.Errorf("error : %w", err)
 		ctx.JSON(http.StatusInternalServerError, errorResponse(errors.New(fmt.Sprintf("unable to locate book with Id %d", req.ID))))
-		return
 	}
 
 	c := context.Background()
@@ -283,7 +275,6 @@ func (api *booksApi) DeleteBook(ctx *gin.Context) {
 
 func (api *booksApi) postProcessAddingBook(book *model.Book) {
 	ctx := context.Background()
-	api.filter.Add([]byte(book.Isbn))
 	api.storeBookMeta(ctx, book)
 }
 

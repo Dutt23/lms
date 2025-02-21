@@ -1,4 +1,4 @@
-package service
+package cache
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"golang.org/x/exp/rand"
 )
 
-type BookCacheService interface {
+type BookCache interface {
 	StoreBookMetaInCache(c context.Context, book *model.Book) error
 	DoesBookExist(c context.Context, bookId uint64) bool
 	GetBook(c context.Context, bookId uint64) *model.Book
@@ -19,15 +19,15 @@ type BookCacheService interface {
 	IsIsbnUnique(c context.Context, isbn string) bool
 }
 
-type bookCacheService struct {
+type bookCache struct {
 	conn connectors.CacheConnector
 }
 
-func NewBookCacheService(client connectors.CacheConnector) BookCacheService {
-	return &bookCacheService{conn: client}
+func NewBookCache(client connectors.CacheConnector) BookCache {
+	return &bookCache{conn: client}
 }
 
-func (cache *bookCacheService) StoreBookMetaInCache(c context.Context, book *model.Book) error {
+func (cache *bookCache) StoreBookMetaInCache(c context.Context, book *model.Book) error {
 	bookKey := CacheKey(c, "SET_BOOK", fmt.Sprintf("%d", book.Id))
 	bookCountKey := CacheKey(c, "SET_BOOK", book.Isbn)
 
@@ -51,7 +51,7 @@ func (cache *bookCacheService) StoreBookMetaInCache(c context.Context, book *mod
 	return err
 }
 
-func (cache *bookCacheService) DoesBookExist(c context.Context, bookId uint64) bool {
+func (cache *bookCache) DoesBookExist(c context.Context, bookId uint64) bool {
 	db := cache.conn.DB(c)
 	bookKey := CacheKey(c, "SET_BOOK", fmt.Sprintf("%d", bookId))
 	res, err := db.Exists(c, bookKey).Result()
@@ -64,7 +64,7 @@ func (cache *bookCacheService) DoesBookExist(c context.Context, bookId uint64) b
 	return res > 0
 }
 
-func (cache *bookCacheService) IsIsbnUnique(c context.Context, isbn string) bool {
+func (cache *bookCache) IsIsbnUnique(c context.Context, isbn string) bool {
 	db := cache.conn.DB(c)
 	res, err := db.BFExists(c, BOOK_ISBN_FILTER, isbn).Result()
 
@@ -76,13 +76,13 @@ func (cache *bookCacheService) IsIsbnUnique(c context.Context, isbn string) bool
 	return !res
 }
 
-func (cache *bookCacheService) DeleteBook(c context.Context, bookId uint64) error {
+func (cache *bookCache) DeleteBook(c context.Context, bookId uint64) error {
 	db := cache.conn.DB(c)
 	bookKey := CacheKey(c, "SET_BOOK", fmt.Sprintf("%d", bookId))
 	return db.Del(c, bookKey).Err()
 }
 
-func (cache *bookCacheService) GetBook(c context.Context, bookId uint64) *model.Book {
+func (cache *bookCache) GetBook(c context.Context, bookId uint64) *model.Book {
 	db := cache.conn.DB(c)
 	bookKey := CacheKey(c, "SET_BOOK", fmt.Sprintf("%d", bookId))
 	res, err := db.Get(c, bookKey).Bytes()

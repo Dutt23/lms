@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/bits-and-blooms/bloom/v3"
+	cache "github.com/dutt23/lms/cache"
 	"github.com/dutt23/lms/config"
 	"github.com/dutt23/lms/model"
 	"github.com/dutt23/lms/pkg/connectors"
-	service "github.com/dutt23/lms/services"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm/clause"
 )
@@ -20,10 +20,10 @@ type membersApi struct {
 	config *config.AppConfig
 	db     connectors.SqliteConnector
 	filter *bloom.BloomFilter
-	cache  service.MemberCacheService
+	cache  cache.MemberCache
 }
 
-func NewMembersApi(config *config.AppConfig, db connectors.SqliteConnector, bookFilter *bloom.BloomFilter, cache service.MemberCacheService) *membersApi {
+func NewMembersApi(config *config.AppConfig, db connectors.SqliteConnector, bookFilter *bloom.BloomFilter, cache cache.MemberCache) *membersApi {
 	return &membersApi{
 		config: config,
 		db:     db,

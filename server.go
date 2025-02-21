@@ -6,6 +6,7 @@ import (
 
 	"github.com/bits-and-blooms/bloom/v3"
 	"github.com/dutt23/lms/api"
+	cache "github.com/dutt23/lms/cache"
 	"github.com/dutt23/lms/config"
 	"github.com/dutt23/lms/pkg/connectors"
 	service "github.com/dutt23/lms/services"
@@ -58,7 +59,8 @@ func (server *Server) setupRouter() {
 }
 
 func (server *Server) addBookRoutes(grp *gin.RouterGroup) {
-	bookHandler := api.NewBooksApi(server.config, server.DB, server.bookFilter, service.NewBookCacheService(server.Cache))
+	cache := cache.NewBookCache(server.Cache)
+	bookHandler := api.NewBooksApi(server.config, server.DB, cache, service.NewBookService(server.DB, cache))
 	grp.POST("/books", bookHandler.AddBook)
 	grp.GET("/books", bookHandler.GetBooks)
 	grp.GET("/books/:id", bookHandler.GetBook)
@@ -67,7 +69,7 @@ func (server *Server) addBookRoutes(grp *gin.RouterGroup) {
 }
 
 func (server *Server) addMemberRoutes(grp *gin.RouterGroup) {
-	memberHandler := api.NewMembersApi(server.config, server.DB, server.memberFilter, service.NewMemberCacheService(server.Cache))
+	memberHandler := api.NewMembersApi(server.config, server.DB, server.memberFilter, cache.NewMemberCache(server.Cache))
 	grp.POST("/members", memberHandler.AddMember)
 	grp.GET("/members", memberHandler.GetMembers)
 	grp.GET("/members/:id", memberHandler.GetMember)

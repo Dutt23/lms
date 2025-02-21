@@ -1,4 +1,4 @@
-package service
+package cache
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"golang.org/x/exp/rand"
 )
 
-type MemberCacheService interface {
+type MemberCache interface {
 	StoreMemberMetaInCache(c context.Context, member *model.Member) error
 	IsEmailUnique(c context.Context, email string) bool
 	GetMember(c context.Context, memberId uint64) *model.Member
@@ -19,15 +19,15 @@ type MemberCacheService interface {
 	DeleteMember(c context.Context, memberId uint64) error
 }
 
-type memberCacheService struct {
+type memberCache struct {
 	conn connectors.CacheConnector
 }
 
-func NewMemberCacheService(client connectors.CacheConnector) MemberCacheService {
-	return &memberCacheService{conn: client}
+func NewMemberCache(client connectors.CacheConnector) MemberCache {
+	return &memberCache{conn: client}
 }
 
-func (cache *memberCacheService) StoreMemberMetaInCache(c context.Context, member *model.Member) error {
+func (cache *memberCache) StoreMemberMetaInCache(c context.Context, member *model.Member) error {
 	bookKey := CacheKey(c, "SET_MEMBER", fmt.Sprintf("%d", member.Id))
 
 	db := cache.conn.DB(c)
@@ -46,7 +46,7 @@ func (cache *memberCacheService) StoreMemberMetaInCache(c context.Context, membe
 	return err
 }
 
-func (cache *memberCacheService) IsEmailUnique(c context.Context, email string) bool {
+func (cache *memberCache) IsEmailUnique(c context.Context, email string) bool {
 	db := cache.conn.DB(c)
 	res, err := db.BFExists(c, MEMBER_EMAIL_FILTER, email).Result()
 
@@ -58,7 +58,7 @@ func (cache *memberCacheService) IsEmailUnique(c context.Context, email string) 
 	return !res
 }
 
-func (cache *memberCacheService) DoesMemberExist(c context.Context, memberId uint64) bool {
+func (cache *memberCache) DoesMemberExist(c context.Context, memberId uint64) bool {
 	db := cache.conn.DB(c)
 	memberKey := CacheKey(c, "SET_MEMBER", fmt.Sprintf("%d", memberId))
 	res, err := db.Exists(c, memberKey).Result()
@@ -71,7 +71,7 @@ func (cache *memberCacheService) DoesMemberExist(c context.Context, memberId uin
 	return res > 0
 }
 
-func (cache *memberCacheService) GetMember(c context.Context, memberId uint64) *model.Member {
+func (cache *memberCache) GetMember(c context.Context, memberId uint64) *model.Member {
 	db := cache.conn.DB(c)
 	memberKey := CacheKey(c, "SET_MEMBER", fmt.Sprintf("%d", memberId))
 	res, err := db.Get(c, memberKey).Bytes()
@@ -93,7 +93,7 @@ func (cache *memberCacheService) GetMember(c context.Context, memberId uint64) *
 	return book
 }
 
-func (cache *memberCacheService) DeleteMember(c context.Context, memberId uint64) error {
+func (cache *memberCache) DeleteMember(c context.Context, memberId uint64) error {
 	db := cache.conn.DB(c)
 	bookKey := CacheKey(c, "SET_MEMBER", fmt.Sprintf("%d", memberId))
 	return db.Del(c, bookKey).Err()
