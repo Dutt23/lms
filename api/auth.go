@@ -102,5 +102,5 @@ func (api *authApi) LoginUser(ctx *gin.Context) {
 func (api *authApi) CheckAuth(ctx *gin.Context) {
   authPayload := ctx.MustGet(middleware.AuthPayloadKey).(*token.Payload)
   fmt.Println(authPayload)
-  ctx.Status(http.StatusOK)
+  ctx.JSON(http.StatusOK, authPayload)
 }

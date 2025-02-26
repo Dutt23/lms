@@ -141,5 +141,5 @@ func (server *Server) addAuthRoutes(grp *gin.RouterGroup, opts *routerOpts) {
 	authHandler := api.NewAuthApi(server.config, opts.memberService, server.tokenMaker)
 	grp.POST("/login/user", authHandler.LoginUser)
 	authRoutes := grp.Group("/").Use(middleware.AuthMiddleware(server.tokenMaker))
-	authRoutes.POST("/auth/check", authHandler.LoginUser)
+	authRoutes.POST("/auth/check", authHandler.CheckAuth)
 }
